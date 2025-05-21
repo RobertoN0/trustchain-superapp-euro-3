@@ -122,6 +122,8 @@
         android:id="@+id/offlineMoneyFragment"
         android:name="nl.tudelft.trustchain.eurotoken.ui.offline.OfflineMoneyFragment"
         android:label="Offline Money">
-
+        <action
+            android:id="@+id/action_offlineMoneyFragment_to_requestMoneyFragment"
+            app:destination="@+id/requestMoneyFragment"/>
     </fragment>
 </navigation>
