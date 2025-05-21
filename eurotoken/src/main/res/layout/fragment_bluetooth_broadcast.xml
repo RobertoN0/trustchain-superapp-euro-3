@@ -8,7 +8,7 @@
     android:background="?android:colorBackground">
 
     <Button
-        android:id="@+id/btnSendHello"
+        android:id="@+id/btnBluetoothBroadcast"
         android:layout_width="249dp"
         android:layout_height="68dp"
         android:background="@color/democracy_blue"

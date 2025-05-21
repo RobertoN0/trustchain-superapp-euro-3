@@ -29,11 +29,13 @@ import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentTransferEuroBinding
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
+import nl.tudelft.trustchain.eurotoken.utils.BluetoothBroadcastManager
 import org.json.JSONException
 import org.json.JSONObject
 
 class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) {
     private val binding by viewBinding(FragmentTransferEuroBinding::bind)
+    private lateinit var bluetoothBroadcastManager: BluetoothBroadcastManager
 
     private val qrCodeUtils by lazy {
         QRCodeUtils(requireContext())
@@ -42,6 +44,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        bluetoothBroadcastManager = BluetoothBroadcastManager(requireContext())
         lifecycleScope.launchWhenResumed {
             while (isActive) {
                 val ownKey = transactionRepository.trustChainCommunity.myPeer.publicKey

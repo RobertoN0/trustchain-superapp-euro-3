@@ -34,6 +34,9 @@
         <action
             android:id="@+id/action_transferFragment_to_requestMoneyFragment"
             app:destination="@id/requestMoneyFragment" />
+        <action
+            android:id="@+id/action_transferFragment_to_bluetoothBroadcastFragment"
+            app:destination="@id/bluetoothBroadcastFragment" />
     </fragment>
     <fragment
         android:id="@+id/sendMoneyFragment"
