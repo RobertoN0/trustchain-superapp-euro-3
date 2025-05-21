@@ -10,4 +10,5 @@
     <string name="toggle_demo_mode">Turn %s Demo Mode</string>
     <string name="trust_scores_menu_item">Trustscores DB</string>
     <string name="trust_scores_db_item_score">%d%%</string>
+    <string name="menu_bluetooth_broadcast">Bluetooth</string>
 </resources>

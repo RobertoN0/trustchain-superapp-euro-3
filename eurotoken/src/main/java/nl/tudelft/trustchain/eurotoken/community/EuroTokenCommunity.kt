@@ -41,6 +41,7 @@ class EuroTokenCommunity(
     init {
         messageHandlers[MessageId.ROLLBACK_REQUEST] = ::onRollbackRequestPacket
         messageHandlers[MessageId.ATTACHMENT] = ::onLastAddressPacket
+        messageHandlers[MessageId.BLUETOOTH_BROADCAST] = ::onBluetoothBroadcastPacket
         if (store.getPreferred().isEmpty()) {
             DefaultGateway.addGateway(store)
         }
@@ -57,6 +58,10 @@ class EuroTokenCommunity(
     private fun onRollbackRequestPacket(packet: Packet) {
         val (peer, payload) = packet.getAuthPayload(RollbackRequestPayload.Deserializer)
         onRollbackRequest(peer, payload)
+    }
+
+    private fun onBluetoothBroadcastPacket(packet: Packet) {
+        val (peer, payload) = packet.getAuthPayload(BluetoothPayload.Deserializer)
     }
 
     /**
@@ -127,6 +132,7 @@ class EuroTokenCommunity(
         const val GATEWAY_CONNECT = 1
         const val ROLLBACK_REQUEST = 1
         const val ATTACHMENT = 4
+        const val BLUETOOTH_BROADCAST = 5
     }
 
     class Factory(
