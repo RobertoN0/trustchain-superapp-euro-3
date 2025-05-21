@@ -13,4 +13,8 @@
         android:id="@+id/exchangeFragment"
         android:icon="@drawable/ic_baseline_account_balance_24"
         android:title="Exchange" />
+    <item
+        android:id="@+id/offlineMoneyFragment"
+        android:icon="@drawable/ic_baseline_incoming_24"
+        android:title="Offline Money"/>
 </menu>

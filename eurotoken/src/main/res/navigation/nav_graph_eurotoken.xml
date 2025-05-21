@@ -118,4 +118,10 @@
             android:id="@+id/action_createMoneyFragment_to_transactionsFragment"
             app:destination="@id/transactionsFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/offlineMoneyFragment"
+        android:name="nl.tudelft.trustchain.eurotoken.ui.offline.OfflineMoneyFragment"
+        android:label="Offline Money">
+
+    </fragment>
 </navigation>
