@@ -1,6 +1,8 @@
 package nl.tudelft.trustchain.eurotoken.ui.offline
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
@@ -29,6 +31,22 @@ class OfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_offline_mon
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding.receiveMoney.setOnClickListener {
+            showToast("Receive clicked")
+        }
+
+        binding.sendMoney.setOnClickListener {
+            showToast("Send clicked")
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
     companion object {
