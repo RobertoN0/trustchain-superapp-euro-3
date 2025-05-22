@@ -79,4 +79,27 @@ class BluetoothController(
             }
         }.start()
     }
+
+    @SuppressLint("MissingPermission")
+    fun connectToServer(serverUuid: UUID, serverAddress: String, onConnected: (BluetoothSocket) -> Unit) {
+        if (!hasBluetoothPermissions()) {
+            throw SecurityException("Bluetooth permissions not granted")
+        }
+        val manager = context.getSystemService(BluetoothManager::class.java)
+        val adapter = manager?.adapter ?: return
+        val device = adapter.getRemoteDevice(serverAddress)
+        val socket = device.createRfcommSocketToServiceRecord(serverUuid)
+        Thread {
+            try {
+                socket.connect()
+                onConnected(socket)
+            } catch (e: IOException) {
+                Log.e("BluetoothClient", "Failed to connect", e)
+                try {
+                    socket.close()
+                } catch (_: IOException) { }
+                    Log.e("BluetoothClient", "Could not close socket", e)
+            }
+        }.start()
+    }
 }

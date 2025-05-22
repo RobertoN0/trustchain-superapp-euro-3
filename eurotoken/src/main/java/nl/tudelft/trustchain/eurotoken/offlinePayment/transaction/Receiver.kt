@@ -1,6 +1,7 @@
 package nl.tudelft.trustchain.eurotoken.offlinePayment.transaction
 
 import android.bluetooth.BluetoothSocket
+import android.util.Log
 import nl.tudelft.ipv8.Peer
 import nl.tudelft.ipv8.util.toHex
 import org.json.JSONObject
@@ -39,8 +40,13 @@ class Receiver(
         val connectionData = JSONObject()
         connectionData.put("public_key", myPeer.publicKey.keyToBin().toHex())
         connectionData.put("amount", amount)
+        connectionData.put("name", "ugo")
+        connectionData.put("type", "transfer")
         connectionData.put("uuid", uuid.toString())
+
+        Log.i("Offline", "Generated QR data: $connectionData")
 
         return connectionData
     }
 }
+

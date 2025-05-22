@@ -125,5 +125,8 @@
         <action
             android:id="@+id/action_offlineMoneyFragment_to_requestMoneyFragment"
             app:destination="@+id/requestMoneyFragment"/>
+        <action
+            android:id="@+id/action_offlineMoneyFragment_to_sendMoneyFragment"
+            app:destination="@+id/sendMoneyFragment"/>
     </fragment>
 </navigation>

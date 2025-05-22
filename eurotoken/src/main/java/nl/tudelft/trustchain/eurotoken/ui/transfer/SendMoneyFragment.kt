@@ -159,5 +159,6 @@ class SendMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_money) {
         const val ARG_NAME = "name"
         const val TRUSTSCORE_AVERAGE_BOUNDARY = 70
         const val TRUSTSCORE_LOW_BOUNDARY = 30
+        const val ARG_UUID_BLUETOOTH = "uuid"
     }
 }

@@ -268,6 +268,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
             var amount = this.optLong("amount", -1L)
             var name = this.optString("name")
             var type = this.optString("type")
+            var uuid = this.optString("uuid")
         }
 
         fun getAmount(amount: String): Long {
