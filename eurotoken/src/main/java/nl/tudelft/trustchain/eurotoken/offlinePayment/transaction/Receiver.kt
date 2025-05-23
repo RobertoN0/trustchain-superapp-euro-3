@@ -25,7 +25,7 @@ class Receiver(
      * receiver.start()
      * ```
      */
-    fun start(myPeer: Peer, amount: Int, onClientConnected: (BluetoothSocket) -> Unit): JSONObject {
+    fun start(myPeer: Peer, name: String, amount: Int, onClientConnected: (BluetoothSocket) -> Unit): JSONObject {
         if (!bluetoothController.isBluetoothSupported()) {
             throw UnsupportedOperationException("Device does not support Bluetooth")
         }
@@ -40,6 +40,9 @@ class Receiver(
         connectionData.put("public_key", myPeer.publicKey.keyToBin().toHex())
         connectionData.put("amount", amount)
         connectionData.put("uuid", uuid.toString())
+        connectionData.put("serverAddress", bluetoothController.getLocalAddress())
+        connectionData.put("name", name)
+        connectionData.put("type", "transfer")
 
         return connectionData
     }
