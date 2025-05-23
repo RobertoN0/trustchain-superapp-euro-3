@@ -2,10 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <application>
-        <activity android:name=".EuroTokenMainActivity"></activity>
-    </application>
-
     <!-- Request legacy Bluetooth permissions on older devices. -->
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
@@ -32,6 +28,12 @@
 
     <!-- Needed only if your app uses Bluetooth scan results to derive
          physical location. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+
+    <application>
+        <activity android:name=".EuroTokenMainActivity"></activity>
+    </application>
 
 </manifest>
