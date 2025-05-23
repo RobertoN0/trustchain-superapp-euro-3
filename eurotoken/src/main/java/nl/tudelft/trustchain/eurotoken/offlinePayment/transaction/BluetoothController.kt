@@ -33,6 +33,12 @@ class BluetoothController(
         activityStarter(enableBtIntent)
     }
 
+    @SuppressLint("MissingPermission")
+    fun getLocalAddress(): String {
+        val adapter = (context.getSystemService(BluetoothManager::class.java))?.adapter
+        return adapter?.address ?: throw IllegalStateException("Bluetooth unavailable")
+    }
+
     private fun hasBluetoothPermissions(): Boolean {
         return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             val connectPermission = ContextCompat.checkSelfPermission(
@@ -55,6 +61,7 @@ class BluetoothController(
     @SuppressLint("MissingPermission")
     fun startServer(uuid: UUID, onClientConnected: (BluetoothSocket) -> Unit) {
         if (!hasBluetoothPermissions()) {
+            Log.e("Offline", "Bluetooth permissions not granted")
             throw SecurityException("Bluetooth permissions not granted")
         }
 
@@ -62,11 +69,14 @@ class BluetoothController(
         val bluetoothAdapter = bluetoothManager?.adapter
             ?: throw UnsupportedOperationException("Bluetooth not supported")
 
+        Log.i("Offline", "Starting Bluetooth server")
         val serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord("EuroToken", uuid)
 
         Thread {
             try {
+                Log.i("Offline", "Waiting for Bluetooth connection")
                 val socket = serverSocket.accept()
+                Log.i("Offline", "Bluetooth connection established")
                 onClientConnected(socket)
             } catch (e: IOException) {
                 Log.e("BluetoothServer", "Socket accept() failed", e)

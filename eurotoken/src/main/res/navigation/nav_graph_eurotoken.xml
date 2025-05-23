@@ -57,6 +57,9 @@
         <action
             android:id="@+id/action_requestMoneyFragment_to_transactionsFragment"
             app:destination="@id/transactionsFragment" />
+        <action
+            android:id="@+id/action_requestMoneyFragment_to_transactionProgressFragment"
+            app:destination="@+id/transactionProgressFragment"/>
         <argument
             android:name="data"
             app:argType="string" />
@@ -123,7 +126,26 @@
         android:name="nl.tudelft.trustchain.eurotoken.ui.offline.OfflineMoneyFragment"
         android:label="Offline Money">
         <action
-            android:id="@+id/action_offlineMoneyFragment_to_requestMoneyFragment"
-            app:destination="@+id/requestMoneyFragment"/>
+            android:id="@+id/action_offlineMoneyFragment_to_receiverDetailsFragment"
+            app:destination="@+id/receiverDetailsFragment"/>
+    </fragment>
+    <fragment
+        android:id="@+id/receiverDetailsFragment"
+        android:name="nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment"
+        android:label="Receiver Details">
+        <action
+            android:id="@+id/action_receiverDetailsFragment_to_offlineMoneyFragment"
+            app:destination="@id/offlineMoneyFragment"/>
+        <action
+            android:id="@+id/action_receiverDetailsFragment_to_requestMoneyFragment"
+            app:destination="@id/requestMoneyFragment"/>
+    </fragment>
+    <fragment
+        android:id="@+id/transactionProgressFragment"
+        android:name="nl.tudelft.trustchain.eurotoken.ui.offline.TransactionProgressFragment"
+        android:label="Transaction Progress">
+        <action
+            android:id="@+id/action_transactionProgressFragment_to_offlineMoneyFragment"
+            app:destination="@id/offlineMoneyFragment"/>
     </fragment>
 </navigation>
