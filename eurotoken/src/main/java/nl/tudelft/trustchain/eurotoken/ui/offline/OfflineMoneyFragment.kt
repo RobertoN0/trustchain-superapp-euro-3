@@ -6,23 +6,24 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.Fragment
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import nl.tudelft.trustchain.common.util.QRCodeUtils
 import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentOfflineMoneyBinding
+import nl.tudelft.trustchain.eurotoken.offlinePayment.OfflineTransactionViewModel
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
-import nl.tudelft.trustchain.eurotoken.ui.transfer.TransferFragment
-import org.json.JSONException
+import nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment.Companion.ARG_AMOUNT
+import nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment.Companion.ARG_IS_EDITABLE
+import nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment.Companion.ARG_NAME
+import org.json.JSONObject
 
-/**
- * A simple [Fragment] subclass.
- * Use the [OfflineMoneyFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
+
 class OfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_offline_money) {
     private val binding by viewBinding(FragmentOfflineMoneyBinding::bind)
+    private val transactionViewModel: OfflineTransactionViewModel by activityViewModels()
 
     private val qrCodeUtils by lazy {
         QRCodeUtils(requireContext())
@@ -36,20 +37,19 @@ class OfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_offline_mon
                 handleScannedData(it)
             }
         } else {
-            Toast.makeText(requireContext(), "Scan cancelled or failed", Toast.LENGTH_SHORT).show()
+            showToast("Scan cancelled or failed")
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        transactionViewModel.reset()
 
         binding.receiveMoney.setOnClickListener {
-            showToast("Receive clicked")
             onReceiveClicked()
         }
 
         binding.sendMoney.setOnClickListener {
-            showToast("Send clicked")
             onSendClicked()
         }
     }
@@ -63,22 +63,31 @@ class OfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_offline_mon
         qrScannerLauncher.launch(scanIntent)
     }
 
-    private fun showToast(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-    }
-
     private fun handleScannedData(data: String) {
         try {
-            Log.i("Offline", "Scanned data: $data")
-            val connectionData = TransferFragment.Companion.ConnectionData(data)
-            Log.i("Offline", "Parsed connection data: $connectionData")
+            val payload = JSONObject(data)
+            transactionViewModel.setDetailsFromQRPayload(payload)
+            val details = transactionViewModel.transactionDetails.value
 
-            if (connectionData.type == "transfer") {
-                findNavController().navigate(R.id.action_offlineMoneyFragment_to_receiverDetailsFragment)
-            }
-        } catch (e: JSONException) {
-            Toast.makeText(requireContext(), "Scan failed, try again", Toast.LENGTH_LONG).show()
+            val bundle = bundleOf(
+                ARG_IS_EDITABLE to false,
+                ARG_NAME to details?.name,
+                ARG_AMOUNT to details?.amount
+            )
+
+            findNavController().navigate(
+                R.id.action_offlineMoneyFragment_to_receiverDetailsFragment,
+                bundle
+            )
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            showToast("QR code not recognized")
         }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 }
 

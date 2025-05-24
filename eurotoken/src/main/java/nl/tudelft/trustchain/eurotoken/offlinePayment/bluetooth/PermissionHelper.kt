@@ -3,7 +3,6 @@ package nl.tudelft.trustchain.eurotoken.offlinePayment.bluetooth
 import android.Manifest
 import android.os.Build
 
-import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat

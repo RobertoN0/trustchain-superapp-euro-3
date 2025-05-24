@@ -21,14 +21,54 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintTop_toBottomOf="@id/fragment_title"
+        app:layout_constraintBottom_toTopOf="@id/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/phase_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView android:id="@+id/phase_connecting"
+                style="@style/PhaseTextStyle"
+                android:text="Connecting" />
+
+            <TextView android:id="@+id/phase_connected"
+                style="@style/PhaseTextStyle"
+                android:text="Connected" />
+
+            <TextView android:id="@+id/phase_sending_seed"
+                style="@style/PhaseTextStyle"
+                android:text="Sending Seed" />
+
+            <TextView android:id="@+id/phase_receiving_tokens"
+                style="@style/PhaseTextStyle"
+                android:text="Sending Tokens" />
+
+            <TextView android:id="@+id/phase_completed"
+                style="@style/PhaseTextStyle"
+                android:text="Completed" />
+
+        </LinearLayout>
+    </ScrollView>
+
     <Button
         android:id="@+id/back"
         android:text="Back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@+id/fragment_title"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 

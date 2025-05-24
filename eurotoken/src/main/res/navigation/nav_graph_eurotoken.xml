@@ -139,6 +139,9 @@
         <action
             android:id="@+id/action_receiverDetailsFragment_to_requestMoneyFragment"
             app:destination="@id/requestMoneyFragment"/>
+        <action
+            android:id="@+id/action_receiverDetailsFragment_to_transactionProgressFragment"
+            app:destination="@id/transactionProgressFragment"/>
     </fragment>
     <fragment
         android:id="@+id/transactionProgressFragment"

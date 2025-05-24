@@ -1,8 +1,8 @@
 package nl.tudelft.trustchain.eurotoken.offlinePayment.bluetooth
 
 import android.Manifest
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -22,12 +22,17 @@ class BluetoothClientThread(
     private val onError: (Exception) -> Unit
 ) {
 
-    private val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+    private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
+    private val bluetoothAdapter = bluetoothManager?.adapter
+        ?: throw UnsupportedOperationException("Bluetooth not supported")
     private var isRunning = true
 
     private val receiver = object : BroadcastReceiver() {
 
-        @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+        @RequiresPermission(allOf = [
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT
+        ])
         override fun onReceive(c: Context, intent: Intent) {
             if (BluetoothDevice.ACTION_FOUND == intent.action) {
                 val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -38,7 +43,7 @@ class BluetoothClientThread(
                 }
 
                 if (device != null && device.name == targetDeviceName && isRunning) {
-                    Log.d("BluetoothClient", "Found matching device: ${device.name}")
+                    Log.d("Offline", "Found matching device: ${device.name}")
                     bluetoothAdapter.cancelDiscovery()
                     connectToDevice(device)
                     context.unregisterReceiver(this)
@@ -50,6 +55,8 @@ class BluetoothClientThread(
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun start() {
         if (!bluetoothAdapter.isDiscovering) {
+            Log.i("Offline", "Entering Discovery mode")
+            Log.d("Offline", "Searching for device `$targetDeviceName`, uuid: `$serviceUUID`")
             val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
             context.registerReceiver(receiver, filter)
             bluetoothAdapter.startDiscovery()
@@ -65,17 +72,20 @@ class BluetoothClientThread(
             // Already unregistered
         }
         bluetoothAdapter.cancelDiscovery()
+        Log.i("Offline", "Scanning stopped")
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun connectToDevice(device: BluetoothDevice) {
+        Log.i("Offline", "Connecting to device")
         Thread {
             try {
                 val socket = device.createRfcommSocketToServiceRecord(serviceUUID)
                 socket.connect()
-                Log.d("BluetoothClient", "Connected to ${device.name}")
+                Log.d("Offline", "Connected to ${device.name}")
                 onConnected(socket)
             } catch (e: IOException) {
-                Log.e("BluetoothClient", "Connection failed", e)
+                Log.e("Offline", "Connection failed", e)
                 onError(e)
             }
         }.start()
