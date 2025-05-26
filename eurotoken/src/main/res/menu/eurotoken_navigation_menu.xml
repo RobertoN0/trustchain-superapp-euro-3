@@ -17,4 +17,8 @@
         android:id="@+id/offlineMoneyFragment"
         android:icon="@drawable/ic_baseline_incoming_24"
         android:title="Offline Money"/>
+    <item
+        android:id="@+id/bluetoothBroadcastFragment"
+        android:icon="@drawable/ic_bluetooth"
+        android:title="@string/menu_bluetooth_broadcast" />
 </menu>

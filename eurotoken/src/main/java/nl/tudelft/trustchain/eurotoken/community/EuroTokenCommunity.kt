@@ -1,6 +1,9 @@
 package nl.tudelft.trustchain.eurotoken.community
 
 import android.content.Context
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import android.util.Log
 import kotlin.random.Random
 import nl.tudelft.ipv8.Community
 import nl.tudelft.ipv8.IPv4Address
@@ -18,6 +21,8 @@ import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity.EurotokenPreference
 import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity.EurotokenPreferences.EUROTOKEN_SHARED_PREF_NAME
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.ui.settings.DefaultGateway
+
+data class BroadcastMessage(val senderId: String, val message: String)
 
 class EuroTokenCommunity(
     store: GatewayStore,
@@ -38,9 +43,13 @@ class EuroTokenCommunity(
      */
     private var myContext: Context
 
+    private val _bluetoothBroadcasts = MutableLiveData<List<BroadcastMessage>>(emptyList())
+    val bluetoothBroadcasts: LiveData<List<BroadcastMessage>> get() = _bluetoothBroadcasts
+
     init {
         messageHandlers[MessageId.ROLLBACK_REQUEST] = ::onRollbackRequestPacket
         messageHandlers[MessageId.ATTACHMENT] = ::onLastAddressPacket
+        messageHandlers[MessageId.BLUETOOTH_BROADCAST] = ::onBluetoothBroadcastPacket
         if (store.getPreferred().isEmpty()) {
             DefaultGateway.addGateway(store)
         }
@@ -48,6 +57,41 @@ class EuroTokenCommunity(
         myTrustStore = trustStore
         myContext = context
     }
+
+    private fun onBluetoothBroadcastPacket(packet: Packet) {
+        val (peer, payload) = packet.getAuthPayload(BroadcastBluetoothPayload.Deserializer)
+        val message = payload.message.toString(Charsets.UTF_8)
+        val senderId = peer.key.toString()
+        val current = _bluetoothBroadcasts.value.orEmpty().toMutableList()
+        current.add(BroadcastMessage(senderId, message))
+        _bluetoothBroadcasts.postValue(current)
+        Log.d("EuroTokenCommunity", "Received Bluetooth broadcast from ${peer.key} with message: $message")
+    }
+
+    /**
+     * Invia via Bluetooth un messaggio di broadcast a tutti i peer conosciuti.
+     *
+     * @param messageText il testo del messaggio da inviare
+     */
+    fun broadcastBluetoothMessage(messageText: String) {
+        val payload = BroadcastBluetoothPayload(
+            id      = "bluetooth_broadcast",
+            message = messageText.toByteArray(Charsets.UTF_8)
+        )
+        val packet = serializePacket(
+            MessageId.BLUETOOTH_BROADCAST,
+            payload,
+            encrypt = false    // metti true se vuoi cifrare
+        )
+        val bluetoothPeers = getPeers().filter { peer ->
+            peer.bluetoothAddress != null
+        }
+
+        bluetoothPeers.forEach { peer ->
+            send(peer, packet)
+        }
+    }
+
 
     @JvmName("setTransactionRepository1")
     fun setTransactionRepository(transactionRepositoryLocal: TransactionRepository) {
@@ -127,6 +171,7 @@ class EuroTokenCommunity(
         const val GATEWAY_CONNECT = 1
         const val ROLLBACK_REQUEST = 1
         const val ATTACHMENT = 4
+        const val BLUETOOTH_BROADCAST = 5
     }
 
     class Factory(

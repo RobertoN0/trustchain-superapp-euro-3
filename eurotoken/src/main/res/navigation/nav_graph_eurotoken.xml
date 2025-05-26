@@ -151,4 +151,9 @@
             android:id="@+id/action_transactionProgressFragment_to_offlineMoneyFragment"
             app:destination="@id/offlineMoneyFragment"/>
     </fragment>
+    <fragment
+        android:id="@+id/bluetoothBroadcastFragment"
+        android:name="nl.tudelft.trustchain.eurotoken.ui.offline.BroadcastFragment"
+        android:label="Bluetooth Broadcast"
+        tools:layout="@layout/fragment_broadcast" />
 </navigation>
