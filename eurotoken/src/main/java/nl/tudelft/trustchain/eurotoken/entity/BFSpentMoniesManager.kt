@@ -72,7 +72,7 @@ class BFSpentMoniesManager(
 
         // Step 3: Update our shared filter
         val previousShared = sharedBloomFilter?.copy() ?: ourFilter.copy()
-        previousShared.putAll(ourFilter)
+        previousShared.merge(ourFilter)
 
         if (receivedFilter == null) {
             sharedBloomFilter = previousShared
@@ -81,7 +81,7 @@ class BFSpentMoniesManager(
 
         // Step 4: Try to include received filter
         val combinedWithReceived = previousShared.copy()
-        combinedWithReceived.putAll(receivedFilter)
+        combinedWithReceived.merge(receivedFilter)
 
         if (combinedWithReceived.estimateSize() <= expectedItems) {
             // Include the received BF
@@ -91,7 +91,7 @@ class BFSpentMoniesManager(
 
         // Step 5: Try reset approach
         val resetFilter = ourFilter.copy()
-        resetFilter.putAll(receivedFilter)
+        resetFilter.merge(receivedFilter)
 
         if (resetFilter.estimateSize() <= expectedItems) {
             // Reset the shared BF
