@@ -1,5 +1,7 @@
 package nl.tudelft.trustchain.eurotoken.db
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.util.BitSet
 import kotlin.math.absoluteValue
 import kotlin.math.ln
