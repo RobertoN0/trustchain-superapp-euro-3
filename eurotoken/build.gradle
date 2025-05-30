@@ -47,6 +47,10 @@ android {
         viewBinding = true
     }
 
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
     namespace 'nl.tudelft.trustchain.eurotoken'
 }
 

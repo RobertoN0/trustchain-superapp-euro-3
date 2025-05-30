@@ -220,6 +220,10 @@ class SimpleBloomFilter(
     fun getBitSize() = bitArray.size()
 
     /**
+     * Get bit array cardinality (how many bits are active)
+     */
+    fun getBitCardinality() = bitArray.cardinality()
+    /**
      * Get capacity in bytes
      */
     fun getCapacityBytes() = capacityBytes
