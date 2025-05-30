@@ -156,4 +156,11 @@
         android:name="nl.tudelft.trustchain.eurotoken.ui.offline.BroadcastFragment"
         android:label="Bluetooth Broadcast"
         tools:layout="@layout/fragment_broadcast" />
+
+    <fragment
+        android:id="@+id/intermediaryFragment"
+        android:name="nl.tudelft.trustchain.eurotoken.ui.exchange.IntermediaryTokenFragment"
+        android:label="Intermediary Gateway"
+        tools:layout="@layout/fragment_intermediary" />
+
 </navigation>

@@ -1,0 +1,42 @@
+package nl.tudelft.trustchain.eurotoken.entity
+
+data class BillFaceToken(
+    val id: String, // Combinazione di peerId e nonce
+    val amount: Long,
+    val intermediarySignature: ByteArray,
+    val isSpent: Boolean = false,
+    val dateCreated: Long = System.currentTimeMillis()
+) {
+    companion object {
+        fun createId(peerId: String, timestamp: Long): String {
+            val rawId = "$peerId:$timestamp"
+            val bytes = rawId.toByteArray()
+            val md = java.security.MessageDigest.getInstance("SHA-256")
+            val digest = md.digest(bytes)
+            return digest.joinToString("") { "%02x".format(it) }
+        }
+    }
+
+    // Necessario sovrascrivere equals e hashCode per ByteArray
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BillFaceToken
+
+        if (id != other.id) return false
+        if (amount != other.amount) return false
+        if (!intermediarySignature.contentEquals(other.intermediarySignature)) return false
+        if (isSpent != other.isSpent) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + amount.hashCode()
+        result = 31 * result + intermediarySignature.contentHashCode()
+        result = 31 * result + isSpent.hashCode()
+        return result
+    }
+}

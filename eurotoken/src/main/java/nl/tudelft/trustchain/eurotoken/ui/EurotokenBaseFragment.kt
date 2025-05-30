@@ -37,7 +37,7 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
         TrustStore.getInstance(requireContext())
     }
 
-    protected val transactionRepository by lazy {
+    protected open val transactionRepository by lazy {
         TransactionRepository(getIpv8().getOverlay()!!, gatewayStore)
     }
 
