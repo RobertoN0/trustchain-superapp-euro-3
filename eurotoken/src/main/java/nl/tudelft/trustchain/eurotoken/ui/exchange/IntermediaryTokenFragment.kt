@@ -13,6 +13,7 @@ import nl.tudelft.trustchain.common.eurotoken.GatewayStore
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
+import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentIntermediaryBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
@@ -40,6 +41,15 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
         GatewayStore.getInstance(requireContext())
     }
 
+    private fun getTokenBalance(): Long {
+        return tokenStore.getTotalBalance()
+    }
+
+    private fun updateBalance(){
+        binding.txtAccountValue.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
+        binding.txtTokenValue.text = TransactionRepository.prettyAmount(getTokenBalance())
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -48,7 +58,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
 
         binding.txtAccountValue.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
 
-        binding.txtTokenValue.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
+        binding.txtTokenValue.text = TransactionRepository.prettyAmount(getTokenBalance())
 
         convertButton.setOnClickListener {
             val gateway = transactionRepository.getGatewayPeer()
@@ -69,6 +79,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
                 if (amount > 0 && amount % 5 == 0L) {
                     createTokens(amount)
                     transactionRepository.sendWithdrawalProposal(gateway, amount)
+                    updateBalance()
                 } else {
                     Toast.makeText(requireContext(), "Insert a valid amount", Toast.LENGTH_SHORT).show()
                 }
@@ -84,7 +95,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
         if (tokenCount <= 0) {
             Toast.makeText(
                 requireContext(),
-                "L'importo deve essere almeno ${TOKEN_FIXED_VALUE/100} euro",
+                "The amount must be at least ${TOKEN_FIXED_VALUE/50} euro",
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -97,7 +108,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
         val generatedTokens = mutableListOf<BillFaceToken>()
 
         for (i in 0 until tokenCount) {
-            val timestamp = System.currentTimeMillis() + i // Aggiungi i per garantire ID unici
+            val timestamp = System.currentTimeMillis() + i // Guarantees unique timestamps
             val tokenId = BillFaceToken.createId(peerId, timestamp)
 
 
@@ -108,13 +119,14 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
             )
 
             generatedTokens.add(token)
+            tokenStore.saveToken(token)
 
-            Log.d(TAG, "Token creato: ID=${token.id}, Valore=${token.amount}, Signature=${token.intermediarySignature}, Timestamp=${token.dateCreated}")
+            Log.d(TAG, "Created token: ID=${token.id}, Amount=${token.amount}, Signature=${token.intermediarySignature}, Timestamp=${token.dateCreated}")
         }
 
         Toast.makeText(
             requireContext(),
-            "Creati $tokenCount token per un valore di ${prettyAmount(amountInCents)}",
+            "Created $tokenCount tokens for a value of ${prettyAmount(amountInCents)}",
             Toast.LENGTH_LONG
         ).show()
     }
