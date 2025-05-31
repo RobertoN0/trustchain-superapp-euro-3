@@ -19,7 +19,7 @@ import kotlin.math.abs
 class SimpleBloomFilterTest {
 
     private lateinit var filter: SimpleBloomFilter
-    private val testCapacity = 240 // 240 bytes come da paper
+    private val testCapacity = 240 // 240 bytes as the paper
 
     @Before
     fun setUp() {
@@ -29,22 +29,22 @@ class SimpleBloomFilterTest {
     @Test
     fun `test basic element insertion and lookup`() {
         // Given
-        val testElements = listOf("elemento1", "elemento2", "elemento3")
+        val testElements = listOf("element1", "element2", "element3")
 
-        // When - inserimento elementi
+        // When - element insertion
         testElements.forEach { element ->
             val wasAdded = filter.put(element)
-            assertTrue("Elemento dovrebbe essere aggiunto la prima volta", wasAdded)
+            assertTrue("Element should be added the first time", wasAdded)
         }
 
-        // Then - verifica presenza
+        // Then - verify presence
         testElements.forEach { element ->
-            assertTrue("Elemento inserito dovrebbe essere presente", filter.mightContain(element))
+            assertTrue("Inserted element should be present", filter.mightContain(element))
         }
 
-        // And - verifica elemento non inserito
-        assertFalse("Elemento non inserito non dovrebbe essere presente",
-            filter.mightContain("elemento_non_esistente"))
+        // And - verify not inserted element
+        assertFalse("Non-inserted element should not be present",
+            filter.mightContain("non_existent_element"))
     }
 
     @Test
@@ -57,11 +57,11 @@ class SimpleBloomFilterTest {
         val secondInsert = filter.put(element)
 
         // Then
-        assertTrue("Prima inserzione dovrebbe modificare il filtro", firstInsert)
-        assertFalse("Seconda inserzione non dovrebbe modificare il filtro", secondInsert)
+        assertTrue("First insertion should modify the filter", firstInsert)
+        assertFalse("Second insertion should not modify the filter", secondInsert)
 
         // And
-        assertTrue("Elemento dovrebbe essere presente dopo entrambe le inserzioni",
+        assertTrue("Element should be present after both insertions",
             filter.mightContain(element))
     }
 
@@ -79,24 +79,25 @@ class SimpleBloomFilterTest {
         val deserialized = SimpleBloomFilter.fromByteArray(serialized, 3)
 
         // Then
-        assertEquals("Array serializzato dovrebbe avere la capacità corretta",
+        assertEquals("Serialized array should have correct capacity",
             testCapacity, serialized.size)
 
-        // Verifica che tutti gli elementi originali siano presenti
+        // Verify that all original elements are present
         testElements.forEach { element ->
-            assertTrue("Elemento '$element' dovrebbe essere presente dopo deserializzazione",
+            assertTrue("Element '$element' should be present after deserialization",
                 deserialized.mightContain(element))
         }
 
-        // Verifica statistiche simili (potrebbero differire leggermente)
+        // Verify similar statistics (might differ slightly)
         val deserializedCount = deserialized.getApproximateSize()
         val deserializedFPR = deserialized.calculateFalsePositiveRate()
 
-        assertTrue("Conteggio elementi dovrebbe essere simile",
+        assertTrue("Element count should be similar",
             abs(originalCount - deserializedCount) <= 1)
-        assertEquals("False positive rate dovrebbe essere uguale",
+        assertEquals("False positive rate should be equal",
             originalFPR, deserializedFPR, 0.001)
     }
+
 
     @Test
     fun `test union operation`() {
@@ -111,7 +112,6 @@ class SimpleBloomFilterTest {
         elements1.forEach { filter1.put(it) }
         elements2.forEach { filter2.put(it) }
 
-        // Elemento comune
         filter1.put(commonElement)
         filter2.put(commonElement)
 
@@ -119,16 +119,16 @@ class SimpleBloomFilterTest {
         filter1.merge(filter2)
 
         // Then
-        // Tutti gli elementi di entrambi i filtri dovrebbero essere presenti
+        // All elements from both filters should be present
         (elements1 + elements2 + commonElement).forEach { element ->
-            assertTrue("Elemento '$element' dovrebbe essere presente nell'union",
+            assertTrue("Element '$element' should be present in union",
                 filter1.mightContain(element))
         }
 
-        // Il conteggio dovrebbe essere approximately la somma meno gli elementi comuni
-        val expectedCount = elements1.size + elements2.size // common element contato una volta
+        // Count should be approximately the sum minus common elements
+        val expectedCount = elements1.size + elements2.size // common element counted once
         val actualCount = filter1.getApproximateSize()
-        assertTrue("Conteggio union dovrebbe essere ragionevole",
+        assertTrue("Union count should be reasonable",
             actualCount >= expectedCount - 2 && actualCount <= expectedCount + 2)
     }
 
@@ -136,21 +136,21 @@ class SimpleBloomFilterTest {
     fun `test union with different sized filters should fail`() {
         // Given
         val filter1 = SimpleBloomFilter(240, 3)
-        val filter2 = SimpleBloomFilter(480, 3) // Dimensione diversa
+        val filter2 = SimpleBloomFilter(480, 3) // Different dimension
 
         // When & Then
         try {
             filter1.merge(filter2)
-            fail("Union di filtri con dimensioni diverse dovrebbe lanciare eccezione")
+            fail("Union of filters with different dimension should raise an exception")
         } catch (e: IllegalArgumentException) {
-            assertTrue("Messaggio eccezione dovrebbe menzionare la dimensione",
-                e.message?.contains("stessa dimensione") == true)
+            assertTrue("IllegalArgumentException should mention the dimension",
+                e.message?.contains("same size") == true)
         }
     }
 
     @Test
     fun `test false positive rate calculation`() {
-        // Given - aggiungiamo alcuni elementi
+        // Given - add some elements
         val elements = (1..10).map { "element_$it" }
         elements.forEach { filter.put(it) }
 
@@ -158,9 +158,9 @@ class SimpleBloomFilterTest {
         val fpr = filter.calculateFalsePositiveRate()
 
         // Then
-        assertTrue("False positive rate dovrebbe essere > 0", fpr > 0.0)
-        assertTrue("False positive rate dovrebbe essere < 1", fpr < 1.0)
-        assertTrue("False positive rate dovrebbe essere ragionevole (< 0.1)", fpr < 0.1)
+        assertTrue("False positive rate should be > 0", fpr > 0.0)
+        assertTrue("False positive rate should be < 1", fpr < 1.0)
+        assertTrue("False positive rate should be reasonable (< 0.1)", fpr < 0.1)
     }
 
     @Test
@@ -173,10 +173,10 @@ class SimpleBloomFilterTest {
 
         // Then
         val estimatedCount = filter.estimateSize()
-        assertTrue("Stima dovrebbe essere ragionevolmente vicina al conteggio reale",
+        assertTrue("Estimate should be reasonable close to real count",
             abs(estimatedCount - elements.size) <= 5)
 
-        assertTrue("Conteggio approssimativo dovrebbe corrispondere alla stima",
+        assertTrue("Approximate count should correspond to the estimate",
             abs(estimatedCount - filter.getApproximateSize()) <= 2)
     }
 
@@ -187,7 +187,7 @@ class SimpleBloomFilterTest {
 
         // Then
         assertEquals("Empty filter should have 0 elements", 0, emptyFilter.getApproximateSize())
-        assertEquals("Empty filter should have 0 bit set", 0, emptyFilter.getBitSize())
+        assertEquals("Empty filter should have 0 bit set", 0, emptyFilter.getBitCardinality())
         assertEquals("Empty filter shouldh have FPR = 0", 0.0, emptyFilter.calculateFalsePositiveRate(), 0.001)
 
         assertFalse("Empty filter should not contain elements",
@@ -208,26 +208,25 @@ class SimpleBloomFilterTest {
             assertTrue("Copy should contain '$element'", copy.mightContain(element))
         }
 
-        copy.put("new element")
-        assertTrue("Copia dovrebbe contenere nuovo elemento", copy.mightContain("new_element"))
-        assertFalse("Originale non dovrebbe contenere nuovo elemento", filter.mightContain("new_element"))
+        copy.put("new_element")
+        assertTrue("The copy should contain a new element", copy.mightContain("new_element"))
+        assertFalse("The original shouldn't contain the new element", filter.mightContain("new_element"))
 
-        // Statistiche dovrebbero essere simili
-        assertEquals("Numero approssimativo elementi dovrebbe essere uguale",
+        assertEquals("Approximate number of elements should be equal",
             filter.getApproximateSize(), copy.getApproximateSize() - 1)
     }
 
     @Test
     fun `test optimal hash functions calculation`() {
         // When & Then
-        assertEquals("Per FPR 0.03 dovremmo avere 3 funzioni hash",
-            3, SimpleBloomFilter.optimalNumOfHashFunctions(0.03))
+        assertEquals("For FPR 0.03 we should have 3 hash functions",
+            5, SimpleBloomFilter.optimalNumOfHashFunctions(0.03))
 
-        assertEquals("Per FPR 0.01 dovremmo avere più funzioni hash",
+        assertEquals("For FPR 0.01 we should have more hash functions",
             7, SimpleBloomFilter.optimalNumOfHashFunctions(0.01))
 
-        assertEquals("Per FPR 0.1 dovremmo avere meno funzioni hash",
-            2, SimpleBloomFilter.optimalNumOfHashFunctions(0.1))
+        assertEquals("For FPR 0.1 we should have 3 less functions",
+            3, SimpleBloomFilter.optimalNumOfHashFunctions(0.1))
     }
 
     @Test
@@ -237,8 +236,8 @@ class SimpleBloomFilterTest {
         val bits1000Elements = SimpleBloomFilter.optimalNumOfBits(1000, 0.03)
 
         // Then
-        assertTrue("Più elementi richiedono più bit", bits1000Elements > bits100Elements)
-        assertTrue("Il numero di bit dovrebbe essere ragionevole per 100 elementi",
+        assertTrue("More elements require more bits", bits1000Elements > bits100Elements)
+        assertTrue("The number of bir should be reasonable for 100 elements",
             bits100Elements > 500 && bits100Elements < 2000)
     }
 
@@ -253,15 +252,15 @@ class SimpleBloomFilterTest {
         // Then
         val expectedKeys = setOf(
             "capacityBytes", "totalBits", "bitsSet",
-            "approximateElements", "falsePositiveRate", "utilizationPercentage"
+            "approximateSize", "falsePositiveRate", "utilizationPercentage"
         )
 
         expectedKeys.forEach { key ->
-            assertTrue("Debug info dovrebbe contenere '$key'", debugInfo.containsKey(key))
+            assertTrue("Debug info should contain '$key'", debugInfo.containsKey(key))
         }
 
-        assertEquals("Capacity bytes dovrebbe essere corretta", testCapacity, debugInfo["capacityBytes"])
-        assertTrue("Total bits dovrebbe essere capacity * 8",
+        assertEquals("Capacity bytes should be correct", testCapacity, debugInfo["capacityBytes"])
+        assertTrue("Total bits should be capacity * 8",
             debugInfo["totalBits"] == testCapacity * 8)
     }
 
@@ -270,7 +269,7 @@ class SimpleBloomFilterTest {
         // Given
         val manyElements = (1..1000).map { "transaction_$it" }
 
-        // When - misura tempo di inserimento
+        // When
         val startTime = System.currentTimeMillis()
         manyElements.forEach { filter.put(it) }
         val insertTime = System.currentTimeMillis() - startTime

@@ -56,6 +56,7 @@ class SimpleBloomFilter(
 
         /**
          * Calculate optimal number of hash functions for given false positive probability
+         * The used formula comes from the original paper which introduced the BLoom Filters
          */
         fun optimalNumOfHashFunctions(falsePositiveRate: Double): Int {
             return max(1, (-ln(falsePositiveRate) / LOG_TWO).roundToInt())
@@ -268,7 +269,7 @@ class SimpleBloomFilter(
      */
     fun getDebugInfo(): Map<String, Any> {
         return mapOf(
-            "capacityBytes" to capacityBytes,
+            "capacityBytes" to capacityBytes,   // total BF capacity in bytes
             "totalBits" to bitArray.size(),
             "bitsSet" to bitArray.cardinality(),
             "approximateSize" to approximateSize,
