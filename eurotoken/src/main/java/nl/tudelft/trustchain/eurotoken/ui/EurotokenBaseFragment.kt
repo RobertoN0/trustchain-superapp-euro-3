@@ -1,9 +1,12 @@
 package nl.tudelft.trustchain.eurotoken.ui
 
+import android.Manifest
 import android.content.ClipData
+import android.net.ConnectivityManager
 import android.content.ClipboardManager
 import android.content.Context
 import android.media.MediaPlayer
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.text.InputType
 import android.view.Menu
@@ -11,6 +14,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -25,6 +29,7 @@ import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 import nl.tudelft.trustchain.common.ui.BaseFragment
 import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity
 import nl.tudelft.trustchain.eurotoken.R
+import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 
 open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(contentLayoutId) {
@@ -39,6 +44,10 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
 
     protected val transactionRepository by lazy {
         TransactionRepository(getIpv8().getOverlay()!!, gatewayStore)
+    }
+
+    private val euroTokenCommunity by lazy {
+        getIpv8().getOverlay<EuroTokenCommunity>()!!
     }
 
     private val contactStore by lazy {
@@ -59,6 +68,16 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
                 ) {
                     playMoneySound()
                     makeMoneyToast()
+                    if (!isOnline()) {
+                        euroTokenCommunity.broadcastBluetoothMessage("success")
+                    }
+                    else {
+                        Toast.makeText(
+                            requireContext(),
+                            "You are online, money received but no broadcast sent",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
         }
@@ -233,4 +252,13 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
 
         builder.show()
     }
+
+    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
+    protected fun isOnline(): Boolean {
+        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
 }

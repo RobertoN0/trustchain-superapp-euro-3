@@ -69,9 +69,9 @@ class EuroTokenCommunity(
     }
 
     /**
-     * Invia via Bluetooth un messaggio di broadcast a tutti i peer conosciuti.
+     * Broadcasts a message to all connected peers that have a Bluetooth address.
      *
-     * @param messageText il testo del messaggio da inviare
+     * @param messageText The text message to broadcast.
      */
     fun broadcastBluetoothMessage(messageText: String) {
         val payload = BroadcastBluetoothPayload(
@@ -81,7 +81,7 @@ class EuroTokenCommunity(
         val packet = serializePacket(
             MessageId.BLUETOOTH_BROADCAST,
             payload,
-            encrypt = false    // metti true se vuoi cifrare
+            encrypt = false
         )
         val bluetoothPeers = getPeers().filter { peer ->
             peer.bluetoothAddress != null
