@@ -207,6 +207,15 @@ class TransactionRepository(
         ) {
             (block.transaction[KEY_BALANCE] as Long)
         } else if (listOf(
+                BLOCK_TYPE_WITHDRAWL)
+            .contains((block.type))) {
+            // Exclusive withdraw block, just return the balance
+            if (block.isGenesis) {
+                return initialBalance - (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+            }
+            getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.minus(
+                (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
+        } else if (listOf(
                 BLOCK_TYPE_TRANSFER,
                 BLOCK_TYPE_CREATE
             ).contains(block.type) && block.isAgreement
@@ -405,6 +414,28 @@ class TransactionRepository(
         val block =
             trustChainCommunity.createProposalBlock(
                 BLOCK_TYPE_CHECKPOINT,
+                transaction,
+                peer.publicKey.keyToBin()
+            )
+        scope.launch {
+            trustChainCommunity.sendBlock(block, peer)
+        }
+        return block
+    }
+
+    fun sendWithdrawalProposal(peer: Peer, amount: Long): TrustChainBlock? {
+        Log.w("EuroTokenBlockCheck", "Creating check...")
+        if (getMyBalance() - amount < 0) {
+            return null
+        }
+        val transaction =
+            mapOf(
+                KEY_BALANCE to BigInteger.valueOf(getMyBalance() - amount).toLong(),
+                KEY_AMOUNT to BigInteger.valueOf(amount),
+            )
+        val block =
+            trustChainCommunity.createProposalBlock(
+                BLOCK_TYPE_WITHDRAWL,
                 transaction,
                 peer.publicKey.keyToBin()
             )
@@ -1245,6 +1276,7 @@ class TransactionRepository(
         const val BLOCK_TYPE_ROLLBACK = "eurotoken_rollback"
         const val BLOCK_TYPE_JOIN = "eurotoken_join"
         const val BLOCK_TYPE_TRADE = "eurotoken_trade"
+        const val BLOCK_TYPE_WITHDRAWL = "eurotoken_withdrawl"
 
         @Suppress("ktlint:standard:property-naming")
         val EUROTOKEN_TYPES =
@@ -1255,7 +1287,8 @@ class TransactionRepository(
                 BLOCK_TYPE_CHECKPOINT,
                 BLOCK_TYPE_ROLLBACK,
                 BLOCK_TYPE_JOIN,
-                BLOCK_TYPE_TRADE
+                BLOCK_TYPE_TRADE,
+                BLOCK_TYPE_WITHDRAWL
             )
 
         const val KEY_AMOUNT = "amount"
