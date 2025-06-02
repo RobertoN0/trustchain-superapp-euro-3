@@ -13,4 +13,12 @@
         android:id="@+id/exchangeFragment"
         android:icon="@drawable/ic_baseline_account_balance_24"
         android:title="Exchange" />
+    <item
+        android:id="@+id/bluetoothBroadcastFragment"
+        android:icon="@drawable/ic_bluetooth"
+        android:title="@string/menu_bluetooth_broadcast" />
+    <item
+        android:id="@+id/intermediaryFragment"
+        android:icon="@drawable/ic_baseline_currency_exchange_24"
+        android:title="Intermediary Exchange" />
 </menu>

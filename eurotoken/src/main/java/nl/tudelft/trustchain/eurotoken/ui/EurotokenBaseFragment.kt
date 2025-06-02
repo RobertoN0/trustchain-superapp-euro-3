@@ -6,6 +6,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -26,6 +27,7 @@ import nl.tudelft.trustchain.common.ui.BaseFragment
 import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
+import nl.tudelft.trustchain.eurotoken.db.TokenStore
 
 open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(contentLayoutId) {
     protected val logger = KotlinLogging.logger {}
@@ -37,7 +39,14 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
         TrustStore.getInstance(requireContext())
     }
 
-    protected val transactionRepository by lazy {
+    /**
+     * The [TokenStore] to retrieve tokens from.
+     */
+    protected val tokenStore by lazy {
+        TokenStore.getInstance(requireContext())
+    }
+
+    protected open val transactionRepository by lazy {
         TransactionRepository(getIpv8().getOverlay()!!, gatewayStore)
     }
 
@@ -69,7 +78,15 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
         @Suppress("DEPRECATION")
         setHasOptionsMenu(true)
         trustStore.createContactStateTable()
-
+        Log.d(
+            "table",
+            "Creating contact state table in EurotokenBaseFragment"
+        )
+        tokenStore.createContactStateTable()
+        Log.d(
+            "table",
+            "Creating contact state table in EurotokenBaseFragment"
+        )
         lifecycleScope.launchWhenResumed {
         }
     }
