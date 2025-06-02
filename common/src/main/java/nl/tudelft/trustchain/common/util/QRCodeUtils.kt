@@ -29,17 +29,35 @@ class QRCodeUtils(private val context: Context) {
         vertical: Boolean = false
     ) {
         run {
-            val integrator =
-                FragmentIntentIntegrator(fragment)
-                    .setPrompt(promptText ?: "Scan QR Code")
-                    .setOrientationLocked(false)
-                    .setBeepEnabled(true)
-                    .setCameraId(0)
-            if (vertical) {
-                integrator.captureActivity = QRCodeActivityPortrait::class.java
-            }
+            val integrator = intentIntegrator(fragment, promptText, vertical)
             integrator.initiateScan()
         }
+    }
+
+    fun createQRScannerIntent(
+        fragment: Fragment,
+        promptText: String? = null,
+        vertical: Boolean = false
+    ): Intent {
+        val integrator = intentIntegrator(fragment, promptText, vertical)
+        return integrator.createScanIntent()
+    }
+
+    private fun intentIntegrator(
+        fragment: Fragment,
+        promptText: String?,
+        vertical: Boolean
+    ): IntentIntegrator {
+        val integrator = FragmentIntentIntegrator(fragment)
+            .setPrompt(promptText ?: "Scan QR Code")
+            .setOrientationLocked(false)
+            .setBeepEnabled(true)
+            .setCameraId(0)
+
+        if (vertical) {
+            integrator.captureActivity = QRCodeActivityPortrait::class.java
+        }
+        return integrator
     }
 
     fun parseActivityResult(
@@ -48,6 +66,13 @@ class QRCodeUtils(private val context: Context) {
         data: Intent?
     ): String? {
         return IntentIntegrator.parseActivityResult(requestCode, resultCode, data)?.contents
+    }
+
+    fun parseActivityResult(
+        requestCode: Int,
+        data: Intent?
+    ): String? {
+        return IntentIntegrator.parseActivityResult(requestCode, data)?.contents
     }
 
     /**

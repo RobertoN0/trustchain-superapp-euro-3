@@ -47,6 +47,10 @@ android {
         viewBinding = true
     }
 
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
     namespace 'nl.tudelft.trustchain.eurotoken'
 }
 
@@ -76,6 +80,7 @@ dependencies {
 
     // Testing
     testImplementation "junit:junit:$junit_version"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     androidTestImplementation "androidx.test.ext:junit:$android_junit_version"
 
     // Transitive dependencies
