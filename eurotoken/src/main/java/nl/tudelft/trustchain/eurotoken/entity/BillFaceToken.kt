@@ -5,7 +5,8 @@ data class BillFaceToken(
     val amount: Long,
     val intermediarySignature: ByteArray,
     val isSpent: Boolean = false,
-    val dateCreated: Long = System.currentTimeMillis()
+    val dateCreated: Long = System.currentTimeMillis(),
+    var dateReceived: Long? = null
 ) {
     companion object {
         fun createId(peerId: String, timestamp: Long): String {

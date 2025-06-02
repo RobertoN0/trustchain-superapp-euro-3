@@ -27,14 +27,22 @@ class TokenStore(context: Context) {
      * Maps the database rows to BillFaceToken objects.
      */
     private val tokenMapper = { id: String, amount: Long, intermediary_signature: ByteArray,
-                                is_spent: Long, date_created: Long ->
+                                is_spent: Long, date_created: Long, date_received: Long? ->
         BillFaceToken(
             id,
             amount,
             intermediary_signature,
             is_spent == 1L,
-            date_created
+            date_created,
+            date_received
         )
+    }
+
+    /**
+     * Maps database rows to SimpleBloomFilter objects.
+     */
+    private val bloomMapper = { _id: String, _numHash: Long, filterBytes: ByteArray ->
+        SimpleBloomFilter.fromByteArray(filterBytes, _numHash.toInt())
     }
 
     /**
@@ -46,7 +54,8 @@ class TokenStore(context: Context) {
             token.amount,
             token.intermediarySignature,
             if (token.isSpent) 1L else 0L,
-            token.dateCreated
+            token.dateCreated,
+            token.dateReceived
         )
     }
 
@@ -92,8 +101,50 @@ class TokenStore(context: Context) {
         return database.dbTokensQueries.getUnspentTokens(tokenMapper).executeAsList()
     }
 
+    /**
+     * Gets all spent tokens.
+     */
+    fun getSpentTokens(): List<BillFaceToken> {
+        return database.dbTokensQueries.getSpentTokens(tokenMapper).executeAsList()
+    }
+    /**
+     * Updates the date received for a token.
+     */
+    fun updateDateReceived(dateReceived: Long, id: String) {
+        database.dbTokensQueries.updateDateReceived(dateReceived, id)
+    }
+
     fun createContactStateTable() {
         database.dbTokensQueries.createContactStateTable()
+    }
+
+    fun createBloomFilterTable() {
+        database.dbTokensQueries.createBloomFilterTable()
+    }
+
+    /**
+     * Inserts a bloom filter into the database.
+     */
+    fun saveBloomFilter(id: String, filter: SimpleBloomFilter) {
+        database.dbTokensQueries.insertOrUpdateBloomFilter(
+            id,
+            filter.getNumHashFunctions().toLong(),
+            filter.toByteArray()
+        )
+    }
+
+    /**
+     * Retrieves a bloom filter by its ID.
+     */
+    fun getBloomFilter(id: String): SimpleBloomFilter? {
+        return database.dbTokensQueries.selectBloomFilter(id, bloomMapper).executeAsOneOrNull()
+    }
+
+    /**
+     * Deletes a bloom filter by its ID.
+     */
+    fun deleteBloomFilter(id: String) {
+        database.dbTokensQueries.deleteBloomFilter(id)
     }
 
     companion object {

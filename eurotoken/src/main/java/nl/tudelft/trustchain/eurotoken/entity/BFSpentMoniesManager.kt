@@ -2,6 +2,7 @@ package nl.tudelft.trustchain.eurotoken.entity
 
 import android.util.Log
 import nl.tudelft.trustchain.eurotoken.db.SimpleBloomFilter
+import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.*
 
@@ -11,14 +12,13 @@ import kotlin.math.*
  * Implements Algorithm 2 from the paper "Ad Hoc Prevention of Double-Spending in Offline Payments"
  */
 class BFSpentMoniesManager(
+    private val tokenStore: TokenStore,
+    private val bloomFilterId: String,
     private val bloomFilterCapacity: Int = 240, // 240 bytes as per paper
     private val expectedItems: Int = 100,
     private val falsePositiveRate: Double = 0.03 // 3% FPR target
 ) {
     private val spendingIdGenerator = SpendingIdentifierGenerator()
-    private var receivedMonies = ConcurrentHashMap<String, Long>() // ID -> timestamp
-    private var sharedBloomFilter: SimpleBloomFilter? = null
-
     // Optimal hash functions based on target FPR (so it's dynamically set)
     private val numHashFunctions = SimpleBloomFilter.optimalNumOfHashFunctions(falsePositiveRate) // 3% FPR
 
@@ -37,17 +37,29 @@ class BFSpentMoniesManager(
         const val RESULT_CAPACITY_EXCEEDED = "CAPACITY_EXCEEDED"
     }
 
+    init {
+        tokenStore.createBloomFilterTable()
+        val existing = tokenStore.getBloomFilter(bloomFilterId)
+        if (existing == null) {
+            val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
+            tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
+            Log.d(TAG, "Initialize Bloom filter")
+        }
+    }
+
     /**
-     * Add received money to our local set with timestamp for expiration
+     * Add received money to our database with timestamp for expiration
      * Called when we receive a legitimate transaction
      */
-    fun addReceivedMoney(transaction: Transaction) {
-        val spendingId = generateSpendingId(transaction)
+    fun addReceivedMoney(tokens: List<BillFaceToken>) {
         val timestamp = System.currentTimeMillis()
-
-        receivedMonies[spendingId] = timestamp
+        tokens.forEach { token ->
+            token.dateReceived = timestamp
+            tokenStore.saveToken(token)
+            tokenStore.markTokenAsSpent(token.id)
+        }
         // TODO: include statistics here from StatisticalCollector
-        Log.d(TAG, "Added received money with ID: $spendingId (total: ${receivedMonies.size})")
+        Log.d(TAG, "Added received money")
 
         if (shouldPerformCleanup()) {
             performCleanup()
@@ -58,22 +70,19 @@ class BFSpentMoniesManager(
      * CORE DOUBLE-SENDING CHECK
      * Check if money has been spent (double-spending detection)
      */
-    fun isDoubleSpent(transaction: Transaction): Boolean {
-        val spendingId = generateSpendingId(transaction)
-
-        // Check against our own received monies
-        if (receivedMonies.containsKey(spendingId)) {
-            Log.w(TAG, "Double-spending detected in local set: $spendingId")
-            // TODO: include statistics here from StatisticalCollector
-            return true
-        }
-
-        // Check against shared Bloom filter
-        sharedBloomFilter?.let { filter ->
-            if (filter.mightContain(spendingId)) {
-                Log.w(TAG, "Potential double-spending detected in Bloom filter: $spendingId")
-                // TODO: include statistics here from StatisticalCollector
+    fun isDoubleSpent(tokens: List<BillFaceToken>): Boolean {
+        tokens.forEach { token ->
+            val existingToken = tokenStore.getToken(token.id)
+            if (existingToken != null) {
+                Log.w(TAG, "Double-spending detected in local DB for token: ${token.id}")
                 return true
+            }
+
+            getBloomFilter()?.let { filter ->
+                if (filter.mightContain(token.id)) {
+                    Log.w(TAG, "Potential double-spending detected in Bloom filter for token: ${token.id}")
+                    return true
+                }
             }
         }
 
@@ -88,12 +97,12 @@ class BFSpentMoniesManager(
      * @return Pair of (filter to share, algorithm result code)
      */
     fun createSharedBloomFilter(receivedFilter: SimpleBloomFilter?): Pair<SimpleBloomFilter?, String> {
-        Log.d(TAG, "Creating shared Bloom filter. Received monies: ${receivedMonies.size}, " +
+        Log.d(TAG, "Creating shared Bloom filter. Received monies: ${getAllSpentTokens().size}, " +
             "Expected capacity: $expectedItems")
 
         // Step 1: Check if we can include our received monies
-        if (receivedMonies.size > expectedItems) {
-            Log.w(TAG, "Too many received monies (${receivedMonies.size} > $expectedItems), " +
+        if (getAllSpentTokens().size > expectedItems) {
+            Log.w(TAG, "Too many received monies (${getAllSpentTokens().size} > $expectedItems), " +
                 "cannot include all in filter")
             // TODO: include "StatisticalCollector"
             return Pair(null, RESULT_CAPACITY_EXCEEDED)
@@ -101,17 +110,17 @@ class BFSpentMoniesManager(
 
         // Step 2: Create filter from our monies (the 'simplest' but also we want to avoid that)
         val ourFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
-        receivedMonies.keys.forEach { spendingId ->
-            ourFilter.put(spendingId)
+        getAllSpentTokens().forEach { token ->
+            ourFilter.put(token.id)
         }
         Log.d(TAG, "Created our filter F_M with ${ourFilter.getApproximateSize()} items")
 
         // Step 3: Update our shared filter F_S ← F_S ∪ F_M
-        val previousShared = sharedBloomFilter?.copy() ?: ourFilter.copy()
+        val previousShared = getBloomFilter()?.copy() ?: ourFilter.copy()
         previousShared.merge(ourFilter)
 
         if (receivedFilter == null) {
-            sharedBloomFilter = previousShared
+            tokenStore.saveBloomFilter(bloomFilterId, previousShared)
             Log.d(TAG, "No received filter, using our shared filter")
             return Pair(previousShared, RESULT_ONLY_OURS)
         }
@@ -122,7 +131,7 @@ class BFSpentMoniesManager(
 
         if (combinedWithReceived.estimateSize() <= expectedItems) {
             // Success: include the received BF
-            sharedBloomFilter = combinedWithReceived
+            tokenStore.saveBloomFilter(bloomFilterId, combinedWithReceived)
             Log.d(TAG, "Successfully included received filter. Combined size: ${combinedWithReceived.estimateSize()}")
             // TODO: include "StatisticalCollector"
             return Pair(combinedWithReceived, RESULT_INCLUDED_RECEIVED)
@@ -136,7 +145,7 @@ class BFSpentMoniesManager(
 
         if (resetFilter.estimateSize() <= expectedItems) {
             // Reset the shared BF
-            sharedBloomFilter = resetFilter
+            tokenStore.saveBloomFilter(bloomFilterId, resetFilter)
             Log.d(TAG, "Reset strategy successful. New filter size: ${resetFilter.estimateSize()}")
             return Pair(resetFilter, RESULT_RESET_SHARED)
         }
@@ -145,11 +154,11 @@ class BFSpentMoniesManager(
 
         // Step 6: Keep previous or return our own
         if (previousShared.estimateSize() <= expectedItems) {
-            sharedBloomFilter = previousShared
+            tokenStore.saveBloomFilter(bloomFilterId, previousShared)
             Log.d(TAG, "Keeping previous shared filter. Size: ${previousShared.estimateSize()}")
             return Pair(previousShared, RESULT_KEPT_PREVIOUS)
         } else {
-            sharedBloomFilter = ourFilter
+            tokenStore.saveBloomFilter(bloomFilterId, ourFilter)
             Log.d(TAG, "Previous filter too large, using only our filter. Size: ${ourFilter.estimateSize()}")
             return Pair(ourFilter, RESULT_ONLY_OURS)
         }
@@ -180,23 +189,23 @@ class BFSpentMoniesManager(
      * Get current shared Bloom filter for broadcasting to other nodes
      */
     fun getSharedBloomFilterBytes(): ByteArray? {
-        return sharedBloomFilter?.toByteArray()
+        return getBloomFilter()?.toByteArray()
     }
 
     /**
      * Check if we have a valid filter to share
      */
     fun hasValidFilterToShare(): Boolean {
-        return sharedBloomFilter != null &&
-            sharedBloomFilter!!.getApproximateSize() > 0 &&
-            sharedBloomFilter!!.estimateSize() <= expectedItems
+        return getBloomFilter() != null &&
+            getBloomFilter()!!.getApproximateSize() > 0 &&
+            getBloomFilter()!!.estimateSize() <= expectedItems
     }
 
     /**
      * Get filter info for broadcasting decisions
      */
     fun getFilterInfo(): Map<String, Any> {
-        val filter = sharedBloomFilter
+        val filter = getBloomFilter()
         return if (filter != null) {
             mapOf(
                 "hasFilter" to true,
@@ -218,15 +227,18 @@ class BFSpentMoniesManager(
         val expirationThreshold = currentTime - cleanupIntervalMs
 
         // Remove expired received monies
-        val sizeBefore = receivedMonies.size
-        receivedMonies.entries.removeIf { (_, timestamp) ->
-            timestamp < expirationThreshold
+        val sizeBefore = getAllSpentTokens().size
+        val expiredTokens = getAllSpentTokens().filter { token ->
+            token.dateReceived != null && token.dateReceived!! < expirationThreshold
         }
-        val sizeAfter = receivedMonies.size
+        expiredTokens.forEach { expired ->
+            tokenStore.deleteToken(expired.id)
+        }
+        val sizeAfter = getAllSpentTokens().size
 
-        // Reset shared filter if it becomes too sparse
-        if (receivedMonies.isEmpty()) {
-            sharedBloomFilter = null
+        if (getAllSpentTokens().isEmpty()) {
+            val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
+            tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
         }
 
         lastCleanupTime = currentTime
@@ -240,8 +252,11 @@ class BFSpentMoniesManager(
      * Force clear all data (for testing or reset)
      */
     fun clearAllData() {
-        receivedMonies.clear()
-        sharedBloomFilter = null
+        getAllSpentTokens().forEach { token ->
+            tokenStore.deleteToken(token.id)
+        }
+        val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
+        tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
         Log.d(TAG, "All data cleared")
     }
 
@@ -266,9 +281,24 @@ class BFSpentMoniesManager(
      * Clear expired data
      */
     fun clearExpiredData() {
-        receivedMonies.clear()
-        sharedBloomFilter = null
+        getAllSpentTokens().forEach { token ->
+            tokenStore.deleteToken(token.id)
+        }
+        val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
+        tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
         Log.d(TAG, "Cleared expired data")
+    }
+
+    fun getBloomFilter(): SimpleBloomFilter? {
+        return tokenStore.getBloomFilter(bloomFilterId)
+    }
+
+    fun getTokenById(tokenId: String): BillFaceToken? {
+        return tokenStore.getToken(tokenId)
+    }
+
+    fun getAllSpentTokens(): List<BillFaceToken> {
+        return tokenStore.getSpentTokens()
     }
 
     /**
@@ -276,8 +306,8 @@ class BFSpentMoniesManager(
      */
     fun getStatistics(): Map<String, Any> {
         return mapOf(
-            "receivedMoniesCount" to receivedMonies.size,
-            "sharedFilterSize" to (sharedBloomFilter?.estimateSize() ?: 0),
+            "receivedMoniesCount" to getAllSpentTokens().size,
+            "sharedFilterSize" to (getBloomFilter()?.estimateSize() ?: 0),
             "sharedFilterCapacity" to bloomFilterCapacity,
             "expectedItems" to expectedItems,
             "falsePositiveRate" to calculateFalsePositiveRate(),
@@ -287,7 +317,7 @@ class BFSpentMoniesManager(
     }
 
     private fun calculateFalsePositiveRate(): Double {
-        val filter = sharedBloomFilter ?: return 0.0
+        val filter = getBloomFilter() ?: return 0.0
         val bitsSet = filter.getBitSize() - filter.toByteArray().count { it == 0.toByte() } * 8
         val totalBits = filter.getBitSize()
         val ratio = bitsSet.toDouble() / totalBits
