@@ -78,7 +78,7 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
                     playMoneySound()
                     makeMoneyToast()
                     if (!isOnline()) {
-                        euroTokenCommunity.broadcastBluetoothMessage("success")
+                        euroTokenCommunity.broadcastBloomFilter()
                     }
                     else {
                         Toast.makeText(
@@ -105,6 +105,12 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
         Log.d(
             "table",
             "Creating contact state table in EurotokenBaseFragment"
+        )
+
+        tokenStore.createBloomFilterTable()
+        Log.d(
+            "table",
+            "Creating bloom filter table in EurotokenBaseFragment"
         )
         lifecycleScope.launchWhenResumed {
         }

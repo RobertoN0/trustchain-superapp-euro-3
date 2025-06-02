@@ -220,6 +220,11 @@ class SimpleBloomFilter(
     fun getBitSize() = bitArray.size()
 
     /**
+     * Get number of hash functions
+     */
+    fun getNumHashFunctions() = numHashFunctions
+
+    /**
      * Get capacity in bytes
      */
     fun getCapacityBytes() = capacityBytes
