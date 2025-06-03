@@ -1,3 +1,5 @@
 [submodule "kotlin-ipv8-updated"]
 	path = kotlin-ipv8
 	url = https://github.com/GijsMargadant/kotlin-ipv8.git
+[submodule "DbConnector"]
+	branch = add-merge-split
