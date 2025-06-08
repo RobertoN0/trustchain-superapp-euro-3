@@ -1,5 +1,11 @@
 package nl.tudelft.trustchain.eurotoken.entity
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.protobuf.ProtoBuf
+import java.util.Base64
 
+@Serializable
 data class BillFaceToken(
     val id: String, // Combinazione di peerId e nonce
     val amount: Long,
@@ -40,3 +46,4 @@ data class BillFaceToken(
         return result
     }
 }
+
