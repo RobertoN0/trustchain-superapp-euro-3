@@ -6,6 +6,7 @@ import android.widget.Toast
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
+import androidx.navigation.fragment.findNavController
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
 import nl.tudelft.ipv8.util.hexToBytes
 import nl.tudelft.ipv8.util.toHex
@@ -13,17 +14,18 @@ import nl.tudelft.trustchain.common.contacts.ContactStore
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
-import nl.tudelft.trustchain.eurotoken.databinding.FragmentBroadcastBinding
+import nl.tudelft.trustchain.eurotoken.databinding.FragmentSendOfflineMoneyBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
 import java.util.Base64
 
-class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_broadcast) {
+class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_offline_money) {
 
+
+    private val binding by viewBinding(FragmentSendOfflineMoneyBinding::bind)
     private var selectedTokens = emptyList<BillFaceToken>()
 
-    private val binding by viewBinding(FragmentBroadcastBinding::bind)
 
     private val ownPublicKey by lazy {
         defaultCryptoProvider.keyFromPublicBin(
@@ -70,10 +72,11 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_broadca
                     "Online transactions are not supported in this mode",
                     Toast.LENGTH_LONG).show()
             } else {
+                var serializedTokens = ""
                 if (selectedTokens.isEmpty()) {
                     Toast.makeText(requireContext(), "No tokens selected for the transaction", Toast.LENGTH_LONG).show()
                 } else {
-                    val serializedTokens = serializeTokens(selectedTokens)
+                    serializedTokens = serializeTokens(selectedTokens)
                     val sizeInBytes: Int = serializedTokens.toByteArray(Charsets.UTF_8).size
                     Toast.makeText(
                         requireContext(),
@@ -81,6 +84,21 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_broadca
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+//                val newName = binding.newContactName.text.toString()
+//                if (addContact && newName.isNotEmpty()) {
+////                val key = defaultCryptoProvider.keyFromPublicBin(publicKey.hexToBytes())
+//                    ContactStore.getInstance(requireContext())
+//                        .addContact(key, newName)
+//                }
+                val success = transactionRepository.sendOfflineProposal(publicKey.hexToBytes(), amount, serializedTokens)
+                if (!success) {
+                    return@setOnClickListener Toast.makeText(
+                        requireContext(),
+                        "Insufficient balance",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                findNavController().navigate(R.id.action_sendOfflineMoneyFragment_to_transactionsFragment)
             }
         }
 

@@ -36,7 +36,7 @@
             app:destination="@id/requestMoneyFragment" />
         <action
             android:id="@+id/action_transferFragment_to_broadcastFragment"
-            app:destination="@id/bluetoothBroadcastFragment" />
+            app:destination="@id/sendOfflineMoneyFragment" />
     </fragment>
     <fragment
         android:id="@+id/sendMoneyFragment"
@@ -155,15 +155,17 @@
             app:destination="@id/offlineMoneyFragment"/>
     </fragment>
     <fragment
-        android:id="@+id/bluetoothBroadcastFragment"
+        android:id="@+id/sendOfflineMoneyFragment"
         android:name="nl.tudelft.trustchain.eurotoken.ui.offline.SendOfflineMoneyFragment"
-        android:label="Bluetooth Broadcast"
-        tools:layout="@layout/fragment_broadcast" />
-
+        android:label="Send Offline Money"
+        tools:layout="@layout/fragment_send_offline_money">
+        <action
+            android:id="@+id/action_sendOfflineMoneyFragment_to_transactionsFragment"
+            app:destination="@id/transactionsFragment"/>
+    </fragment>
     <fragment
         android:id="@+id/intermediaryFragment"
         android:name="nl.tudelft.trustchain.eurotoken.ui.exchange.IntermediaryTokenFragment"
         android:label="Intermediary Gateway"
         tools:layout="@layout/fragment_intermediary" />
-
 </navigation>

@@ -207,7 +207,7 @@ class TransactionRepository(
         ) {
             (block.transaction[KEY_BALANCE] as Long)
         } else if (listOf(
-                BLOCK_TYPE_WITHDRAWL)
+                BLOCK_TYPE_WITHDRAWAL)
             .contains((block.type))) {
             // Exclusive withdraw block, just return the balance
             if (block.isGenesis) {
@@ -215,6 +215,11 @@ class TransactionRepository(
             }
             getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.minus(
                 (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
+        } else if (listOf(
+                BLOCK_TYPE_OFFLINE_TRANSFER)
+                .contains((block.type))) {
+            // TODO: Handle offline transfer
+            return initialBalance
         } else if (listOf(
                 BLOCK_TYPE_TRANSFER,
                 BLOCK_TYPE_CREATE
@@ -294,6 +299,44 @@ class TransactionRepository(
             )
         return trustChainCommunity.createProposalBlock(
             BLOCK_TYPE_TRANSFER,
+            transaction,
+            recipient
+        )
+    }
+
+    fun sendOfflineProposal(
+        recipient: ByteArray,
+        amount: Long,
+        serializedTokens: String
+    ): Boolean {
+        Log.d("sendTransferProposal", "sending amount: $amount")
+        if (getMyBalance() - amount < 0) {
+            return false
+        }
+        scope.launch {
+            sendOfflineProposalSync(recipient, amount, serializedTokens)
+        }
+        return true
+    }
+
+    fun sendOfflineProposalSync(
+        recipient: ByteArray,
+        amount: Long,
+        serializedTokens: String
+    ): TrustChainBlock? {
+        Log.d("sendOfflineProposalSyn", "sending amount: $amount")
+
+        if (getMyBalance() - amount < 0) {
+            return null
+        }
+        val transaction =
+            mapOf(
+                KEY_AMOUNT to BigInteger.valueOf(amount),
+                KEY_BALANCE to (BigInteger.valueOf(getMyBalance()).toLong()),
+                KEY_SERIALIZED_TOKENS to serializedTokens
+            )
+        return trustChainCommunity.createProposalBlock(
+            BLOCK_TYPE_OFFLINE_TRANSFER,
             transaction,
             recipient
         )
@@ -435,7 +478,7 @@ class TransactionRepository(
             )
         val block =
             trustChainCommunity.createProposalBlock(
-                BLOCK_TYPE_WITHDRAWL,
+                BLOCK_TYPE_WITHDRAWAL,
                 transaction,
                 peer.publicKey.keyToBin()
             )
@@ -1276,7 +1319,9 @@ class TransactionRepository(
         const val BLOCK_TYPE_ROLLBACK = "eurotoken_rollback"
         const val BLOCK_TYPE_JOIN = "eurotoken_join"
         const val BLOCK_TYPE_TRADE = "eurotoken_trade"
-        const val BLOCK_TYPE_WITHDRAWL = "eurotoken_withdrawl"
+        const val BLOCK_TYPE_WITHDRAWAL = "eurotoken_withdrawal"
+        const val BLOCK_TYPE_OFFLINE_TRANSFER = "eurotoken_proposal"
+
 
         @Suppress("ktlint:standard:property-naming")
         val EUROTOKEN_TYPES =
@@ -1288,11 +1333,13 @@ class TransactionRepository(
                 BLOCK_TYPE_ROLLBACK,
                 BLOCK_TYPE_JOIN,
                 BLOCK_TYPE_TRADE,
-                BLOCK_TYPE_WITHDRAWL
+                BLOCK_TYPE_WITHDRAWAL,
+                BLOCK_TYPE_OFFLINE_TRANSFER
             )
 
         const val KEY_AMOUNT = "amount"
         const val KEY_BALANCE = "balance"
+        const val KEY_SERIALIZED_TOKENS = "serialized_tokens"
         const val KEY_TRANSACTION_HASH = "transaction_hash"
         const val KEY_PAYMENT_ID = "payment_id"
         const val KEY_IBAN = "iban"
