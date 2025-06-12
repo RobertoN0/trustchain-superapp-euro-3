@@ -51,8 +51,18 @@ class TransactionRepository(
         ) {
             // block is receiving money
             (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
-            // block.transaction[KEY_AMOUNT] as Long
-        } else {
+
+        } else if((listOf(BLOCK_TYPE_OFFLINE_TRANSFER).contains(block.type) && block.isProposal)){
+            0L
+        } else if((listOf(BLOCK_TYPE_OFFLINE_TRANSFER).contains(block.type) && block.isAgreement)){
+            val amount = (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+            if (block.linkPublicKey.contentEquals(trustChainCommunity.myPeer.publicKey.keyToBin()))
+                // block is sending oflline tokens
+                return 0L
+            else
+                // block is receiving offline tokens -> convert to account balance
+                amount
+        }else {
             // block does nothing
             0
         }
@@ -201,28 +211,40 @@ class TransactionRepository(
                     BLOCK_TYPE_TRANSFER,
                     BLOCK_TYPE_DESTROY,
                     BLOCK_TYPE_CHECKPOINT,
-                    BLOCK_TYPE_ROLLBACK
+                    BLOCK_TYPE_ROLLBACK,
+//                    BLOCK_TYPE_OFFLINE_TRANSFER
                 ).contains(block.type) && block.isProposal
             )
         ) {
             (block.transaction[KEY_BALANCE] as Long)
         } else if (listOf(
-                BLOCK_TYPE_WITHDRAWAL)
-            .contains((block.type))) {
+                BLOCK_TYPE_WITHDRAWAL
+                ).contains((block.type))) {
             // Exclusive withdraw block, just return the balance
             if (block.isGenesis) {
                 return initialBalance - (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
             }
             getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.minus(
                 (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
+
         } else if (listOf(
-                BLOCK_TYPE_OFFLINE_TRANSFER)
-                .contains((block.type))) {
-            // TODO: Handle offline transfer
-            return initialBalance
+                BLOCK_TYPE_OFFLINE_TRANSFER
+                ).contains((block.type)) && block.isProposal) {
+            (block.transaction[KEY_BALANCE] as Long)
+        } else if (listOf(
+                BLOCK_TYPE_OFFLINE_TRANSFER
+            ).contains((block.type)) && block.isAgreement) {
+            if (block.isGenesis) {
+                return initialBalance + (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+            }
+            getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.plus(
+                (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+            )
+
         } else if (listOf(
                 BLOCK_TYPE_TRANSFER,
-                BLOCK_TYPE_CREATE
+                BLOCK_TYPE_CREATE,
+                // BLOCK_TYPE_OFFLINE_TRANSFER
             ).contains(block.type) && block.isAgreement
         ) {
             // block is receiving money add it and recurse
