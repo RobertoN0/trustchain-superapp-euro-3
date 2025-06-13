@@ -71,6 +71,17 @@ class RandomSelectorTest {
         assertEquals(7, selected.size)
     }
 
+    @Test
+    fun `does not select spent tokens`() {
+        prepareStoreWithSpentTokens(5)
+
+        val result = selector.select(3)
+
+        assertTrue(result is SelectionResult.Failure)
+        val reason = (result as SelectionResult.Failure).reason
+        assertEquals(reason, "Not enough tokens available")
+    }
+
     private fun prepareStoreWithSpentTokens(n: Int) {
         repeat(n) {
             tokenStore.saveToken(
