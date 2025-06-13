@@ -22,7 +22,26 @@ data class BillFaceToken(
             val digest = md.digest(bytes)
             return digest.joinToString("") { "%02x".format(it) }
         }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun serializeTokenList(tokens: List<BillFaceToken>): String {
+            val bytes = ProtoBuf.encodeToByteArray(
+                ListSerializer(BillFaceToken.serializer()),
+                tokens
+            )
+            return Base64.getEncoder().encodeToString(bytes)
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun deserializeTokenList(serializedTokens: String): List<BillFaceToken> {
+            val bytes = Base64.getDecoder().decode(serializedTokens)
+            return ProtoBuf.decodeFromByteArray(
+                ListSerializer(BillFaceToken.serializer()),
+                bytes
+            )
+        }
     }
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

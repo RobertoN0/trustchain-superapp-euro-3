@@ -3,9 +3,6 @@ package nl.tudelft.trustchain.eurotoken.ui.offline
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.protobuf.ProtoBuf
 import androidx.navigation.fragment.findNavController
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
 import nl.tudelft.ipv8.util.hexToBytes
@@ -18,7 +15,6 @@ import nl.tudelft.trustchain.eurotoken.databinding.FragmentSendOfflineMoneyBindi
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
-import java.util.Base64
 
 class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_offline_money) {
 
@@ -76,7 +72,7 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
                 if (selectedTokens.isEmpty()) {
                     Toast.makeText(requireContext(), "No tokens selected for the transaction", Toast.LENGTH_LONG).show()
                 } else {
-                    serializedTokens = serializeTokens(selectedTokens)
+                    serializedTokens = BillFaceToken.serializeTokenList(selectedTokens)
                     val sizeInBytes: Int = serializedTokens.toByteArray(Charsets.UTF_8).size
                     Toast.makeText(
                         requireContext(),
@@ -133,26 +129,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         }
         return selectedTokens
     }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun serializeTokens(tokens: List<BillFaceToken>): String {
-        val bytes = ProtoBuf.encodeToByteArray(
-            ListSerializer(BillFaceToken.serializer()),
-            tokens
-        )
-        return Base64.getEncoder().encodeToString(bytes)
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun deserializeTokens(b64: String): List<BillFaceToken> {
-        val bytes = Base64.getDecoder().decode(b64)
-        return ProtoBuf.decodeFromByteArray(
-            ListSerializer(BillFaceToken.serializer()),
-            bytes
-        )
-    }
-
-
 
     companion object {
         const val ARG_AMOUNT = "amount"
