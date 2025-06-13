@@ -16,6 +16,8 @@ import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentSendOfflineMoneyBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionResult
+import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.RandomSelector
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
 import java.util.Base64
@@ -24,7 +26,7 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
 
     private val binding by viewBinding(FragmentSendOfflineMoneyBinding::bind)
-    private var selectedTokens = emptyList<BillFaceToken>()
+//    private var selectedTokens = emptyList<BillFaceToken>()
 
 
     private val ownPublicKey by lazy {
@@ -40,12 +42,12 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         val seed = arguments?.getString(ARG_SEED)
         val amount = arguments?.getLong(ARG_AMOUNT)!!
         // TO DO Replace this method with the proper random selection of tokens
-        selectedTokens = selectTokensForAmount(amount)
-        Toast.makeText(
-            requireContext(),
-            "Selected ${selectedTokens.size} tokens for the transaction",
-            Toast.LENGTH_SHORT
-        ).show()
+//        selectedTokens = selectTokensForAmount(amount)
+//        Toast.makeText(
+//            requireContext(),
+//            "Selected ${selectedTokens.size} tokens for the transaction",
+//            Toast.LENGTH_SHORT
+//        ).show()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -54,7 +56,7 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         val publicKey = requireArguments().getString(ARG_PUBLIC_KEY)!!
         val amount = requireArguments().getLong(ARG_AMOUNT)
         val name = requireArguments().getString(SendMoneyFragment.ARG_NAME)!!
-        val seed = requireArguments().getString(ARG_SEED)
+        var seed = requireArguments().getString(ARG_SEED)
         val key = defaultCryptoProvider.keyFromPublicBin(publicKey.hexToBytes())
         val contact = ContactStore.getInstance(view.context).getContactFromPublicKey(key)
         updateBalanceInfo()
@@ -72,6 +74,20 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
                     "Online transactions are not supported in this mode",
                     Toast.LENGTH_LONG).show()
             } else {
+                val selector = RandomSelector(tokenStore, 123456789101112)
+                val result = selector.select(amount)
+                val selectedTokens = mutableListOf<BillFaceToken>()
+                if (result is SelectionResult.Failure) {
+                    return@setOnClickListener Toast.makeText(
+                        requireContext(),
+                        "Error while selecting tokens: " + result.reason,
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else if (result is SelectionResult.Success) {
+                    selectedTokens.addAll(result.tokens)
+                }
+
+
                 var serializedTokens = ""
                 if (selectedTokens.isEmpty()) {
                     Toast.makeText(requireContext(), "No tokens selected for the transaction", Toast.LENGTH_LONG).show()
@@ -111,27 +127,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
     private fun updateBalanceInfo() {
         binding.txtAccountBalance.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
         binding.txtTokenBalance.text = TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
-    }
-
-    private fun selectTokensForAmount(amount: Long): List<BillFaceToken> {
-        val unspentTokens = tokenStore.getUnspentTokens()
-        val totalAvailable = unspentTokens.sumOf { it.amount }
-        if (totalAvailable < amount) {
-            Toast.makeText(requireContext(), "Not enough tokens available", Toast.LENGTH_LONG).show()
-            return emptyList()
-        }
-        val shuffledTokens = unspentTokens.shuffled()
-        val selectedTokens = mutableListOf<BillFaceToken>()
-        var currentSum = 0L
-
-        for (token in shuffledTokens) {
-            selectedTokens.add(token)
-            currentSum += token.amount
-            if (currentSum == amount) {
-                break
-            }
-        }
-        return selectedTokens
     }
 
     @OptIn(ExperimentalSerializationApi::class)
