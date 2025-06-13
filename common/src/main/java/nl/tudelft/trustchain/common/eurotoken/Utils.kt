@@ -19,6 +19,7 @@ fun verifyGatewayIdentity(
 fun getBalanceChangeForBlock(block: TrustChainBlock?): Long {
     if (block == null) return 0
     if (block.transaction[TransactionRepository.KEY_AMOUNT]?.toString()?.contains("BTC") == true) return 0
+    if (block.isProposal && block.type == TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER) return 0
     return if (block.isProposal) { // block is sending money
         -(block.transaction[TransactionRepository.KEY_AMOUNT]?.toString() ?: "0").toLong()
     } else { // block is receiving money

@@ -13,7 +13,8 @@ class EuroTokenOfflineTransferValidator(
         block: TrustChainBlock,
         database: TrustChainStore
     ) {
-        checkOfflineSpending(block.transaction)
+        if (block.isProposal && block.linkPublicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin()))
+            checkOfflineSpending(block.transaction)
         super.validateEuroTokenProposal(block, database)
         return // Valid
     }

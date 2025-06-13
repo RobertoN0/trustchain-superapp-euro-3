@@ -43,8 +43,8 @@ class TokenStore(context: Context) {
             id               = id,
             amount           = amount,
             intermediarySignature = ByteArray(0),
-            isSpent          = false,             // appena ricevuto, quindi non speso
-            dateCreated      = 0L,                // sconosciuto
+            isSpent          = false,
+            dateCreated      = 0L,
             dateReceived     = date_received
         )
     }
