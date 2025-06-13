@@ -1,12 +1,10 @@
 package nl.tudelft.trustchain.eurotoken.db
 
 import android.content.Context
-import androidx.sqlite.db.SupportSQLiteDatabase
-import app.cash.sqldelight.Query
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import nl.tudelft.eurotoken.sqldelight.Database
-import nl.tudelft.peerchat.sqldelight.GetTotalBalance
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.offlinePayment.ITokenStore
 
 /**
  * TokenStore manages the BillFaceToken objects.
@@ -15,7 +13,7 @@ import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 
 
 
-class TokenStore(context: Context) {
+class TokenStore(context: Context): ITokenStore {
     private val driver = AndroidSqliteDriver(
         schema = Database.Schema,
         context = context,
@@ -48,7 +46,7 @@ class TokenStore(context: Context) {
     /**
      * Saves a token to the database.
      */
-    fun saveToken(token: BillFaceToken) {
+    override fun saveToken(token: BillFaceToken) {
         database.dbTokensQueries.insertToken(
             token.id,
             token.amount,
@@ -62,55 +60,55 @@ class TokenStore(context: Context) {
     /**
      * Retrieves a token by its ID.
      */
-    fun getToken(id: String): BillFaceToken? {
+    override fun getToken(id: String): BillFaceToken? {
         return database.dbTokensQueries.getToken(id, tokenMapper).executeAsOneOrNull()
     }
 
     /**
      * Retrieves all tokens from the database.
      */
-    fun getAllTokens(): List<BillFaceToken> {
+    override fun getAllTokens(): List<BillFaceToken> {
         return database.dbTokensQueries.getAllTokens(tokenMapper).executeAsList()
     }
 
     /**
      * Marks a token as spent.
      */
-    fun markTokenAsSpent(id: String) {
+    override fun markTokenAsSpent(id: String) {
         database.dbTokensQueries.markTokenAsSpent(id)
     }
 
     /**
      * Deletes a token from the database.
      */
-    fun deleteToken(id: String) {
+    override fun deleteToken(id: String) {
         database.dbTokensQueries.deleteToken(id)
     }
 
     /**
      * Gets the total balance of unspent tokens.
      */
-    fun getTotalBalance(): Long {
+    override fun getTotalBalance(): Long {
         return database.dbTokensQueries.getTotalBalance().executeAsOneOrNull()?.total ?: 0L
     }
 
     /**
      * Gets all unspent tokens.
      */
-    fun getUnspentTokens(): List<BillFaceToken> {
+    override fun getUnspentTokens(): List<BillFaceToken> {
         return database.dbTokensQueries.getUnspentTokens(tokenMapper).executeAsList()
     }
 
     /**
      * Gets all spent tokens.
      */
-    fun getSpentTokens(): List<BillFaceToken> {
+    override fun getSpentTokens(): List<BillFaceToken> {
         return database.dbTokensQueries.getSpentTokens(tokenMapper).executeAsList()
     }
     /**
      * Updates the date received for a token.
      */
-    fun updateDateReceived(dateReceived: Long, id: String) {
+    override fun updateDateReceived(dateReceived: Long, id: String) {
         database.dbTokensQueries.updateDateReceived(dateReceived, id)
     }
 
@@ -125,7 +123,7 @@ class TokenStore(context: Context) {
     /**
      * Inserts a bloom filter into the database.
      */
-    fun saveBloomFilter(id: String, filter: SimpleBloomFilter) {
+    override fun saveBloomFilter(id: String, filter: SimpleBloomFilter) {
         database.dbTokensQueries.insertOrUpdateBloomFilter(
             id,
             filter.getNumHashFunctions().toLong(),
@@ -136,14 +134,14 @@ class TokenStore(context: Context) {
     /**
      * Retrieves a bloom filter by its ID.
      */
-    fun getBloomFilter(id: String): SimpleBloomFilter? {
+    override fun getBloomFilter(id: String): SimpleBloomFilter? {
         return database.dbTokensQueries.selectBloomFilter(id, bloomMapper).executeAsOneOrNull()
     }
 
     /**
      * Deletes a bloom filter by its ID.
      */
-    fun deleteBloomFilter(id: String) {
+    override fun deleteBloomFilter(id: String) {
         database.dbTokensQueries.deleteBloomFilter(id)
     }
 
