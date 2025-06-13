@@ -855,6 +855,40 @@ class TransactionRepository(
         )
     }
 
+    private fun addOfflineTransferListeners() {
+        trustChainCommunity.registerBlockSigner(
+            BLOCK_TYPE_OFFLINE_TRANSFER,
+            object : BlockSigner {
+                override fun onSignatureRequest(block: TrustChainBlock) {
+                    Log.w("EuroTokenBlockOfflineTransfer", "sig request ${block.transaction}")
+                    // agree if validated
+                    trustChainCommunity.sendBlock(
+                        trustChainCommunity.createAgreementBlock(
+                            block,
+                            block.transaction
+                        )
+                    )
+                }
+            }
+        )
+
+        trustChainCommunity.addListener(
+            BLOCK_TYPE_OFFLINE_TRANSFER,
+            object : BlockListener {
+                override fun onBlockReceived(block: TrustChainBlock) {
+                    // Auto verifyBalance
+                    if (block.isAgreement && block.publicKey.contentEquals(trustChainCommunity.myPeer.publicKey.keyToBin())) {
+                        verifyBalance()
+                    }
+                    Log.d(
+                        "EuroTokenBlockOfflineTransfer",
+                        "${block.type} onBlockReceived: ${block.blockId} ${block.transaction}"
+                    )
+                }
+            }
+        )
+    }
+
     private fun addJoinListeners() {
         trustChainCommunity.registerTransactionValidator(
             BLOCK_TYPE_JOIN,
@@ -1296,6 +1330,7 @@ class TransactionRepository(
         addCheckpointListeners()
         addRollbackListeners()
         addTradeListeners()
+        addOfflineTransferListeners()
     }
 
     companion object {

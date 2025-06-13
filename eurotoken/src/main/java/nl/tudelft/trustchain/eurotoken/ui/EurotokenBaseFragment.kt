@@ -35,6 +35,7 @@ import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.db.TokenStore
+import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 
 open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(contentLayoutId) {
     protected val logger = KotlinLogging.logger {}
@@ -72,14 +73,11 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
     private val onReceiveListener =
         object : BlockListener {
             override fun onBlockReceived(block: TrustChainBlock) {
-                if (block.isAgreement &&
-                    block.publicKey.contentEquals(
-                        transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin()
-                    )
-                ) {
+                // If receiver (agreement.publicKey contains my key) play sound and show toast
+                if (block.isAgreement && block.publicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin())) {
                     playMoneySound()
                     makeMoneyToast()
-                    if (!isOnline()) {
+                    if (!isOnline() && block.type == TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER) {
                         euroTokenCommunity.broadcastBloomFilter()
                     }
                     else {
@@ -88,6 +86,23 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
                             "You are online, money received but no broadcast sent",
                             Toast.LENGTH_LONG
                         ).show()
+                    }
+                }
+                // If sender (agreement.linkPublicKey contains my key) mark tokens as spent
+                else if(block.isAgreement &&
+                    block.linkPublicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin()) &&
+                    block.type == TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER){
+
+                    val serializedTokens = block.transaction[TransactionRepository.KEY_SERIALIZED_TOKENS] as? String
+                        ?: throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Tokens not found in transaction")
+                    // Deserialize the tokens to set them as spent
+                    val tokens = try {
+                        BillFaceToken.deserializeTokenList(serializedTokens)
+                    } catch (e: Exception) {
+                        throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Failed to deserialize tokens")
+                    }
+                    for( token in tokens) {
+                        tokenStore.markTokenAsSpent(token.id)
                     }
                 }
             }
@@ -139,6 +154,10 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
             TransactionRepository.BLOCK_TYPE_CREATE,
             onReceiveListener
         )
+        transactionRepository.trustChainCommunity.addListener(
+            TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER,
+            onReceiveListener
+        )
         super.onResume()
     }
 
@@ -150,6 +169,10 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
         transactionRepository.trustChainCommunity.removeListener(
             onReceiveListener,
             TransactionRepository.BLOCK_TYPE_CREATE
+        )
+        transactionRepository.trustChainCommunity.removeListener(
+            onReceiveListener,
+            TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER
         )
         super.onPause()
     }
