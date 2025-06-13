@@ -63,11 +63,6 @@ class EuroTokenCommunity(
         messageHandlers[MessageId.BLUETOOTH_BROADCAST] = ::onBluetoothBroadcastPacket
         messageHandlers[MessageId.BLOOM_FILTER] = ::onBloomFilterTransmissionPacket
 
-        transactionRepository.trustChainCommunity.registerTransactionValidator(
-            TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER,
-            EuroTokenOfflineTransferValidator(transactionRepository, ::myCheckSpending)
-        )
-
         if (store.getPreferred().isEmpty()) {
             DefaultGateway.addGateway(store)
         }
@@ -169,6 +164,10 @@ class EuroTokenCommunity(
     @JvmName("setTransactionRepository1")
     fun setTransactionRepository(transactionRepositoryLocal: TransactionRepository) {
         transactionRepository = transactionRepositoryLocal
+        transactionRepository.trustChainCommunity.registerTransactionValidator(
+            TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER,
+            EuroTokenOfflineTransferValidator(transactionRepository, ::myCheckSpending)
+        )
     }
 
     private fun onRollbackRequestPacket(packet: Packet) {
