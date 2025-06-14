@@ -861,12 +861,14 @@ class TransactionRepository(
             object : BlockSigner {
                 override fun onSignatureRequest(block: TrustChainBlock) {
                     Log.w("EuroTokenBlockOfflineTransfer", "sig request ${block.transaction}")
+                    val peer = trustChainCommunity.network.getVerifiedByPublicKeyBin(block.publicKey)
                     // agree if validated
                     trustChainCommunity.sendBlock(
                         trustChainCommunity.createAgreementBlock(
                             block,
                             block.transaction
-                        )
+                        ),
+                        peer
                     )
                 }
             }

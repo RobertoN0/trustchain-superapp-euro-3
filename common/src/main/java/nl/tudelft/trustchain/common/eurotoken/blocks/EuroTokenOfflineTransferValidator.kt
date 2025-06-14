@@ -1,5 +1,6 @@
 package nl.tudelft.trustchain.common.eurotoken.blocks
 
+import android.util.Log
 import nl.tudelft.ipv8.attestation.trustchain.TrustChainBlock
 import nl.tudelft.ipv8.attestation.trustchain.TrustChainTransaction
 import nl.tudelft.ipv8.attestation.trustchain.store.TrustChainStore
@@ -13,8 +14,10 @@ class EuroTokenOfflineTransferValidator(
         block: TrustChainBlock,
         database: TrustChainStore
     ) {
-        if (block.isProposal && block.linkPublicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin()))
+        if (block.isProposal && block.linkPublicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin())) {
             checkOfflineSpending(block.transaction)
+            Log.d("EuroTokenOfflineTransferValidator", "Offline transfer detected for block ${block.blockId}.")
+        }
         super.validateEuroTokenProposal(block, database)
         return // Valid
     }
