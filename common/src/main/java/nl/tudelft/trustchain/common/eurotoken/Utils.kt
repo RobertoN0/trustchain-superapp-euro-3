@@ -30,7 +30,9 @@ fun getBalanceChangeForBlock(block: TrustChainBlock?): Long {
 fun getVerifiedBalanceChangeForBlock(block: TrustChainBlock?): Long {
     if (block == null) return 0
     if (block.transaction[TransactionRepository.KEY_AMOUNT]?.toString()?.contains("BTC") == true) return 0
-    if (block.isAgreement || block.type == TransactionRepository.BLOCK_TYPE_ROLLBACK) { // block is receiving money, dont add
+    if (block.isAgreement ||
+        block.type == TransactionRepository.BLOCK_TYPE_ROLLBACK ||
+        (block.isProposal && block.type == TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER)) { // block is receiving money, dont add
         return 0
     } else { // block is sending money
         return -((block.transaction[TransactionRepository.KEY_AMOUNT] ?: BigInteger.valueOf(0)) as BigInteger).toLong()
