@@ -156,12 +156,12 @@ class TransactionRepository(
                 database.getBlockWithHash(block.previousHash),
                 database
             )
-        } else if (listOf(BLOCK_TYPE_TRANSFER, BLOCK_TYPE_DESTROY, BLOCK_TYPE_ROLLBACK).contains(
+        } else if (listOf(BLOCK_TYPE_TRANSFER, BLOCK_TYPE_DESTROY, BLOCK_TYPE_ROLLBACK, BLOCK_TYPE_OFFLINE_TRANSFER).contains(
                 block.type
             ) && block.isProposal
         ) {
             Log.d("EuroTokenBlock", "Validation, sending money")
-            if (block.isGenesis) {
+            if (block.isGenesis || block.type == BLOCK_TYPE_OFFLINE_TRANSFER) {
                 return block.transaction[KEY_BALANCE] as Long
             }
             // block is sending money, but balance is not verified, subtract transfer amount and recurse
