@@ -86,7 +86,8 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 //                    ContactStore.getInstance(requireContext())
 //                        .addContact(key, newName)
 //                }
-                val success = transactionRepository.sendOfflineProposal(publicKey.hexToBytes(), amount, serializedTokens)
+                val tokenBalance = tokenStore.getTotalBalance()
+                val success = transactionRepository.sendOfflineProposal(publicKey.hexToBytes(), tokenBalance, amount, serializedTokens)
                 if (!success) {
                     return@setOnClickListener Toast.makeText(
                         requireContext(),

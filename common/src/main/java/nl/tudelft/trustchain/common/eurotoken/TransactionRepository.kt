@@ -307,27 +307,29 @@ class TransactionRepository(
 
     fun sendOfflineProposal(
         recipient: ByteArray,
+        tokenBalance: Long,
         amount: Long,
         serializedTokens: String
     ): Boolean {
         Log.d("sendTransferProposal", "sending amount: $amount")
-        if (getMyBalance() - amount < 0) {
+        if (tokenBalance - amount < 0) {
             return false
         }
         scope.launch {
-            sendOfflineProposalSync(recipient, amount, serializedTokens)
+            sendOfflineProposalSync(recipient, tokenBalance, amount, serializedTokens)
         }
         return true
     }
 
     fun sendOfflineProposalSync(
         recipient: ByteArray,
+        tokenBalance: Long,
         amount: Long,
         serializedTokens: String
     ): TrustChainBlock? {
         Log.d("sendOfflineProposalSyn", "sending amount: $amount")
 
-        if (getMyBalance() - amount < 0) {
+        if (tokenBalance - amount < 0) {
             return null
         }
         val transaction =
