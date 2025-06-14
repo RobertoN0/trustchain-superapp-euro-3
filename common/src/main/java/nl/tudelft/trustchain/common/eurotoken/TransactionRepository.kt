@@ -214,7 +214,6 @@ class TransactionRepository(
         } else if (listOf(
                 BLOCK_TYPE_WITHDRAWAL
                 ).contains((block.type))) {
-            // Exclusive withdraw block, just return the balance
             if (block.isGenesis) {
                 return initialBalance - (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
             }
@@ -863,14 +862,11 @@ class TransactionRepository(
             object : BlockSigner {
                 override fun onSignatureRequest(block: TrustChainBlock) {
                     Log.w("EuroTokenBlockOfflineTransfer", "sig request ${block.transaction}")
-                    val peer = trustChainCommunity.network.getVerifiedByPublicKeyBin(block.publicKey)
-                    // agree if validated
                     trustChainCommunity.sendBlock(
                         trustChainCommunity.createAgreementBlock(
                             block,
                             block.transaction
-                        ),
-                        peer
+                        )
                     )
                 }
             }

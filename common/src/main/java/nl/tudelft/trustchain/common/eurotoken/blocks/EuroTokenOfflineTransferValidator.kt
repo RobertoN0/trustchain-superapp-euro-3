@@ -16,9 +16,8 @@ class EuroTokenOfflineTransferValidator(
     ) {
         if (block.isProposal && block.linkPublicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin())) {
             checkOfflineSpending(block.transaction)
-            Log.d("EuroTokenOfflineTransferValidator", "Offline transfer detected for block ${block.blockId}.")
         }
-        super.validateEuroTokenProposal(block, database)
+        //super.validateEuroTokenProposal(block, database)
         return // Valid
     }
 
