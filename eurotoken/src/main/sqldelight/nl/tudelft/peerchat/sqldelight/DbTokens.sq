@@ -8,6 +8,32 @@ CREATE TABLE IF NOT EXISTS tokens (
     date_received INTEGER
 );
 
+-- Query to create the tokens table
+createTokenReceivedTable:
+CREATE TABLE IF NOT EXISTS token_received (
+    id            TEXT    PRIMARY KEY NOT NULL,
+    date_received INTEGER NOT NULL,
+    amount        INTEGER NOT NULL
+);
+
+-- Query to insert a new token received
+insertTokenReceived:
+INSERT OR REPLACE INTO token_received (id, date_received, amount)
+VALUES (?, ?, ?);
+
+-- Query to get a token received by its ID
+getAllReceivedTokens:
+SELECT * FROM token_received;
+
+-- Query to get a token received by its ID
+getReceivedTokenIds:
+SELECT id FROM token_received;
+
+-- Query to delete a token received by its ID
+deleteTokenReceived:
+DELETE FROM token_received WHERE id = ?;
+
+
 -- Query to insert a new token
 insertToken:
 INSERT OR REPLACE INTO tokens (id, amount, intermediary_signature, is_spent, date_created, date_received)

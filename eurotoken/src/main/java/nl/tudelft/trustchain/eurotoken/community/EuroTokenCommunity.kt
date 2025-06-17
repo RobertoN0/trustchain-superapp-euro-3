@@ -9,6 +9,7 @@ import nl.tudelft.ipv8.Community
 import nl.tudelft.ipv8.IPv4Address
 import nl.tudelft.ipv8.Overlay
 import nl.tudelft.ipv8.Peer
+import nl.tudelft.ipv8.attestation.trustchain.TrustChainTransaction
 import nl.tudelft.ipv8.keyvault.PrivateKey
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
 import nl.tudelft.ipv8.messaging.Packet
@@ -17,12 +18,14 @@ import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.common.eurotoken.GatewayStore
 import nl.tudelft.trustchain.common.eurotoken.Transaction
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
+import nl.tudelft.trustchain.common.eurotoken.blocks.EuroTokenOfflineTransferValidator
 import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity.EurotokenPreferences.DEMO_MODE_ENABLED
 import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity.EurotokenPreferences.EUROTOKEN_SHARED_PREF_NAME
 import nl.tudelft.trustchain.eurotoken.db.BloomFilterTransmissionPayload
 import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.entity.BFSpentMoniesManager
+import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.ui.settings.DefaultGateway
 
 data class BroadcastMessage(val senderId: String, val message: String)
@@ -39,7 +42,7 @@ class EuroTokenCommunity(
 
     private var myTokenStore: TokenStore
 
-    private val bfManager: BFSpentMoniesManager
+    val bfManager: BFSpentMoniesManager
 
     /**
      * The [TrustStore] used to fetch and update trust scores from peers.
@@ -59,6 +62,7 @@ class EuroTokenCommunity(
         messageHandlers[MessageId.ATTACHMENT] = ::onLastAddressPacket
         messageHandlers[MessageId.BLUETOOTH_BROADCAST] = ::onBluetoothBroadcastPacket
         messageHandlers[MessageId.BLOOM_FILTER] = ::onBloomFilterTransmissionPacket
+
         if (store.getPreferred().isEmpty()) {
             DefaultGateway.addGateway(store)
         }
@@ -69,6 +73,26 @@ class EuroTokenCommunity(
             myTokenStore,
             "shared",
         )
+    }
+
+    private fun myCheckSpending(transaction: TrustChainTransaction) {
+        // Validate the transaction payload
+        Log.d("EuroOfflineValidator", "Validating transaction")
+        val serializedTokens = transaction[TransactionRepository.KEY_SERIALIZED_TOKENS] as? String
+            ?: throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Tokens not found in transaction")
+        // Deserialize the tokens
+        Log.d("EuroOfflineValidator", "Found tokens in transaction, deserializing...")
+        val tokens = try {
+            BillFaceToken.deserializeTokenList(serializedTokens)
+        } catch (e: Exception) {
+            throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Failed to deserialize tokens")
+        }
+
+        Log.d("EuroOfflineValidator", "Deserialized tokens, checking for double spending...")
+        // CHeck if the tokens are valid - signature
+
+        if (bfManager.isDoubleSpent(tokens))
+            throw EuroTokenOfflineTransferValidator.OfflineDoubleSpendingDetected("Double spending detected for tokens: $tokens")
     }
 
     private fun onBluetoothBroadcastPacket(packet: Packet) {
@@ -143,6 +167,10 @@ class EuroTokenCommunity(
     @JvmName("setTransactionRepository1")
     fun setTransactionRepository(transactionRepositoryLocal: TransactionRepository) {
         transactionRepository = transactionRepositoryLocal
+        transactionRepository.trustChainCommunity.registerTransactionValidator(
+            TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER,
+            EuroTokenOfflineTransferValidator(transactionRepository, ::myCheckSpending)
+        )
     }
 
     private fun onRollbackRequestPacket(packet: Packet) {

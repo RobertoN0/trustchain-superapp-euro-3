@@ -1,5 +1,11 @@
 package nl.tudelft.trustchain.eurotoken.entity
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.protobuf.ProtoBuf
+import java.util.Base64
 
+@Serializable
 data class BillFaceToken(
     val id: String, // Combinazione di peerId e nonce
     val amount: Long,
@@ -16,7 +22,26 @@ data class BillFaceToken(
             val digest = md.digest(bytes)
             return digest.joinToString("") { "%02x".format(it) }
         }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun serializeTokenList(tokens: List<BillFaceToken>): String {
+            val bytes = ProtoBuf.encodeToByteArray(
+                ListSerializer(BillFaceToken.serializer()),
+                tokens
+            )
+            return Base64.getEncoder().encodeToString(bytes)
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun deserializeTokenList(serializedTokens: String): List<BillFaceToken> {
+            val bytes = Base64.getDecoder().decode(serializedTokens)
+            return ProtoBuf.decodeFromByteArray(
+                ListSerializer(BillFaceToken.serializer()),
+                bytes
+            )
+        }
     }
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -40,3 +65,4 @@ data class BillFaceToken(
         return result
     }
 }
+

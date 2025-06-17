@@ -98,9 +98,11 @@ open class EuroTokenBaseValidator(val transactionRepository: TransactionReposito
         block: TrustChainBlock,
         database: TrustChainStore
     ) {
+        Log.d("EuroTokenBaseValidator", "Verifying balance available for block ${block.transaction[TransactionRepository.KEY_BALANCE]}")
         val balance =
             getVerifiedBalanceForBlock(block, database)
                 ?: throw PartialPrevious("Missing previous blocks")
+        Log.d("EuroTokenBaseValidator", "Verified balance for block ${block.transaction[TransactionRepository.KEY_BALANCE]}: $balance")
         if (balance < 0) {
             // the validated balance is not enough, but it could be the case we're missing some
             // checkpoint links
