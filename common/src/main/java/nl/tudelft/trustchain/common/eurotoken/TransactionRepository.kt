@@ -1356,7 +1356,7 @@ class TransactionRepository(
         const val BLOCK_TYPE_JOIN = "eurotoken_join"
         const val BLOCK_TYPE_TRADE = "eurotoken_trade"
         const val BLOCK_TYPE_WITHDRAWAL = "eurotoken_withdrawal"
-        const val BLOCK_TYPE_OFFLINE_TRANSFER = "eurotoken_proposal"
+        const val BLOCK_TYPE_OFFLINE_TRANSFER = "eurotoken_offline_transfer"
 
 
         @Suppress("ktlint:standard:property-naming")

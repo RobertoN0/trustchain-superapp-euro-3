@@ -14,7 +14,9 @@ class EuroTokenOfflineTransferValidator(
         block: TrustChainBlock,
         database: TrustChainStore
     ) {
+        Log.d("EuroOfflineValidator", "Validating EuroToken proposal")
         if (block.isProposal && block.linkPublicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin())) {
+            Log.d("EuroOfflineValidator", "Block is a proposal for me")
             checkOfflineSpending(block.transaction)
         }
         //super.validateEuroTokenProposal(block, database)
