@@ -76,10 +76,10 @@
 
     <EditText
         android:id="@+id/amountInput"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="Amount"
-        android:inputType="number"
+        android:hint="0.00 €"
+        android:inputType="numberDecimal"
         app:layout_constraintTop_toBottomOf="@id/amountPrompt"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -92,6 +92,18 @@
         android:padding="10dp"
         android:text="Send money to gateway"
         app:layout_constraintTop_toBottomOf="@id/amountInput"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/blue"/>
+
+    <Button
+        android:id="@+id/refundTokenBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:padding="10dp"
+        android:text="Redeem Unspent Tokens"
+        app:layout_constraintTop_toBottomOf="@id/convertMoneyBtn"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:background="@color/blue"/>

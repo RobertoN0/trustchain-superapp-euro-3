@@ -1,6 +1,8 @@
 package nl.tudelft.trustchain.eurotoken.ui.exchange
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -52,8 +54,11 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.amountInput.addDecimalLimiter()
+
         val amountInput = view.findViewById<EditText>(R.id.amountInput)
         val convertButton = view.findViewById<Button>(R.id.convertMoneyBtn)
+        val refundTokenButton = view.findViewById<Button>(R.id.refundTokenBtn)
 
         binding.txtAccountValue.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
 
@@ -65,8 +70,8 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
             val amountText = amountInput.text.toString()
 
             if (amountText.isNotEmpty()) {
-                val amount = amountText.toLongOrNull()
-                if(amount == null || gateway == null){
+                val amount = getAmount(amountText)
+                if(gateway == null){
                     Toast.makeText(requireContext(), "Gateway not found", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
@@ -77,13 +82,38 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
                 }
                 if (amount > 0 && amount % 5 == 0L) {
                     createTokens(amount)
-                    transactionRepository.sendWithdrawalProposal(gateway, amount)
+                    transactionRepository.sendWithdrawalProposal(gateway, amount, false)
                     updateVisualBalance()
                 } else {
                     Toast.makeText(requireContext(), "Insert a valid amount", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 Toast.makeText(requireContext(), "Insert an amount", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        refundTokenButton.setOnClickListener {
+            val gateway = transactionRepository.getGatewayPeer()
+            val amountToRefund = tokenStore.getTotalBalance()
+            Log.d(TAG, "Refunding tokens for amount: $amountToRefund")
+
+            if (gateway == null) {
+                Toast.makeText(requireContext(), "Gateway not found", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (amountToRefund > 0) {
+                val spentTokens = tokenStore.getUnspentTokens()
+                if (spentTokens.isEmpty()) {
+                    Toast.makeText(requireContext(), "No tokens to refund", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                for (token in spentTokens) {
+                    tokenStore.deleteToken(token.id)
+                }
+                transactionRepository.sendWithdrawalProposal(gateway, amountToRefund, true)
+                updateVisualBalance()
+            } else {
+                Toast.makeText(requireContext(), "No tokens to refund", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -120,7 +150,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
             generatedTokens.add(token)
             tokenStore.saveToken(token)
 
-            Log.d(TAG, "Created token: ID=${token.id}, Amount=${token.amount}, Signature=${token.intermediarySignature}, Timestamp=${token.dateCreated}")
+            // Log.d(TAG, "Created token: ID=${token.id}, Amount=${token.amount}, Signature=${token.intermediarySignature}, Timestamp=${token.dateCreated}")
         }
 
         Toast.makeText(
@@ -128,9 +158,64 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
             "Created $tokenCount tokens for a value of ${prettyAmount(amountInCents)}",
             Toast.LENGTH_LONG
         ).show()
+        Log.d("IntermediaryTokenFragment", "Created $tokenCount tokens for a value of ${prettyAmount(amountInCents)}")
     }
 
     private fun prettyAmount(amount: Long): String {
         return "€${amount / 100},${(amount % 100).toString().padStart(2, '0')}"
+    }
+
+    companion object {
+        fun getAmount(amount: String): Long {
+            val regex = """[^\d]""".toRegex()
+            if (amount.isEmpty()) {
+                return 0L
+            }
+            return regex.replace(amount, "").toLong()
+        }
+
+        fun EditText.decimalLimiter(string: String): String {
+            var amount = getAmount(string)
+
+            if (amount == 0L) {
+                return ""
+            }
+
+            // val amount = string.replace("[^\\d]", "").toLong()
+            return (amount / 100).toString() + "." + (amount % 100).toString().padStart(2, '0')
+        }
+
+        fun EditText.addDecimalLimiter() {
+            this.addTextChangedListener(
+                object : TextWatcher {
+                    override fun afterTextChanged(s: Editable?) {
+                        val str = this@addDecimalLimiter.text!!.toString()
+                        if (str.isEmpty()) return
+                        val str2 = decimalLimiter(str)
+
+                        if (str2 != str) {
+                            this@addDecimalLimiter.setText(str2)
+                            val pos = this@addDecimalLimiter.text!!.length
+                            this@addDecimalLimiter.setSelection(pos)
+                        }
+                    }
+
+                    override fun beforeTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int
+                    ) {
+                    }
+
+                    override fun onTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {}
+                }
+            )
+        }
     }
 }

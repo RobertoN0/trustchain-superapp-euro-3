@@ -214,11 +214,19 @@ class TransactionRepository(
         } else if (listOf(
                 BLOCK_TYPE_WITHDRAWAL
                 ).contains((block.type))) {
-            if (block.isGenesis) {
-                return initialBalance - (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+            if ((block.transaction[KEY_IS_REFUND] as Boolean)){
+                if (block.isGenesis) {
+                    return initialBalance + (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+                }
+                getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.plus(
+                    (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
+            } else{
+                if (block.isGenesis) {
+                    return initialBalance - (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
+                }
+                getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.minus(
+                    (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
             }
-            getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.minus(
-                (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
         } else if (listOf(
                 BLOCK_TYPE_TRANSFER,
                 BLOCK_TYPE_CREATE,
@@ -468,15 +476,24 @@ class TransactionRepository(
         return block
     }
 
-    fun sendWithdrawalProposal(peer: Peer, amount: Long): TrustChainBlock? {
+    fun sendWithdrawalProposal(peer: Peer, amount: Long, isRefunding: Boolean): TrustChainBlock? {
         Log.w("EuroTokenBlockCheck", "Creating check...")
-        if (getMyBalance() - amount < 0) {
-            return null
+        val oAmount : Long
+        if(isRefunding){
+            oAmount = getMyBalance() + amount
         }
+        else{
+            if (getMyBalance() - amount < 0) {
+                return null
+            }
+            oAmount = getMyBalance() - amount
+        }
+
         val transaction =
             mapOf(
-                KEY_BALANCE to BigInteger.valueOf(getMyBalance() - amount).toLong(),
+                KEY_BALANCE to oAmount,
                 KEY_AMOUNT to BigInteger.valueOf(amount),
+                KEY_IS_REFUND to isRefunding
             )
         val block =
             trustChainCommunity.createProposalBlock(
@@ -1379,6 +1396,7 @@ class TransactionRepository(
         const val KEY_TRANSACTION_HASH = "transaction_hash"
         const val KEY_PAYMENT_ID = "payment_id"
         const val KEY_IBAN = "iban"
+        const val KEY_IS_REFUND = "is_refund"
 
         var initialBalance: Long = 0
     }
