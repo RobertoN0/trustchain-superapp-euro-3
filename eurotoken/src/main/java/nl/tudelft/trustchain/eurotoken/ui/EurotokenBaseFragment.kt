@@ -36,6 +36,7 @@ import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.entity.TokenSigner
 
 open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(contentLayoutId) {
     protected val logger = KotlinLogging.logger {}
@@ -61,6 +62,9 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
     private val euroTokenCommunity by lazy {
         getIpv8().getOverlay<EuroTokenCommunity>()!!
     }
+
+    protected val tokenSigner by lazy { TokenSigner(requireContext()) }
+
 
     private val contactStore by lazy {
         ContactStore.getInstance(requireContext())

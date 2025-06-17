@@ -26,6 +26,7 @@ import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.entity.BFSpentMoniesManager
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.entity.TokenSigner
 import nl.tudelft.trustchain.eurotoken.ui.settings.DefaultGateway
 
 data class BroadcastMessage(val senderId: String, val message: String)
@@ -43,6 +44,8 @@ class EuroTokenCommunity(
     private var myTokenStore: TokenStore
 
     private val bfManager: BFSpentMoniesManager
+
+    private val tokenSigner by lazy { TokenSigner(context) }
 
     /**
      * The [TrustStore] used to fetch and update trust scores from peers.
@@ -86,7 +89,12 @@ class EuroTokenCommunity(
             throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Failed to deserialize tokens")
         }
 
-        // CHeck if the tokens are valid - signature
+        val invalid = tokens.firstOrNull { !tokenSigner.verify(it) }
+        if (invalid != null) {
+            throw EuroTokenOfflineTransferValidator.ForgedTokenSignature(
+                "Invalid signature for token ${invalid.id}"
+            )
+        }
 
         if (bfManager.isDoubleSpent(tokens))
             throw EuroTokenOfflineTransferValidator.OfflineDoubleSpendingDetected("Double spending detected for tokens: $tokens")

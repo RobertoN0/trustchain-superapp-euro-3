@@ -15,6 +15,7 @@ import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentIntermediaryBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.entity.TokenSigner
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 
 class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_intermediary) {
@@ -102,19 +103,21 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
 
         val peerId = ownPublicKey.toString()
 
-        val dummySignature = "dummySignature".toByteArray()
-
         val generatedTokens = mutableListOf<BillFaceToken>()
 
         for (i in 0 until tokenCount) {
-            val timestamp = System.currentTimeMillis() + i // Guarantees unique timestamps
+            val timestamp = System.currentTimeMillis() + i
             val tokenId = BillFaceToken.createId(peerId, timestamp)
 
-
+            val signature = tokenSigner.sign(
+                id = tokenId,
+                amount = TOKEN_FIXED_VALUE,
+                dateCreated = timestamp
+            )
             val token = BillFaceToken(
                 id = tokenId,
                 amount = TOKEN_FIXED_VALUE,
-                intermediarySignature = dummySignature
+                intermediarySignature = signature
             )
 
             generatedTokens.add(token)
