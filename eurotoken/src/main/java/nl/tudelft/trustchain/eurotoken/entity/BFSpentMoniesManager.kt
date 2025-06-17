@@ -71,7 +71,9 @@ class BFSpentMoniesManager(
      */
     fun isDoubleSpent(tokens: List<BillFaceToken>): Boolean {
         val tokens_id = tokenStore.getReceivedTokenIds()
+        Log.d(TAG, "Already received tokens: ${tokens_id.joinToString(", ")}")
         tokens.forEach { token ->
+            Log.d(TAG, "Checking for token: ${token.id}")
             val existingToken = tokens_id.contains(token.id)
             if (existingToken) {
                 Log.w(TAG, "Double-spending detected in local DB for token: ${token.id}")

@@ -77,7 +77,18 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
                 if (block.isAgreement && block.publicKey.contentEquals(transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin())) {
                     playMoneySound()
                     makeMoneyToast()
+
                     if (!isOnline() && block.type == TransactionRepository.BLOCK_TYPE_OFFLINE_TRANSFER) {
+                        val serializedTokens = block.transaction[TransactionRepository.KEY_SERIALIZED_TOKENS] as? String
+                            ?: throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Tokens not found in transaction")
+                        val tokens = try {
+                            BillFaceToken.deserializeTokenList(serializedTokens)
+                        } catch (e: Exception) {
+                            throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Failed to deserialize tokens")
+                        }
+
+                        Log.d("EuroOfflineValidator", "Adding spent tokens to BF")
+                        euroTokenCommunity.bfManager.addReceivedMoney(tokens)
                         euroTokenCommunity.broadcastBloomFilter()
                     }
                     else {
