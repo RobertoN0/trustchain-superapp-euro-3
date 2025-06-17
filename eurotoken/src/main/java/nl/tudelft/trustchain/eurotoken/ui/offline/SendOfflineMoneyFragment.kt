@@ -3,9 +3,6 @@ package nl.tudelft.trustchain.eurotoken.ui.offline
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.protobuf.ProtoBuf
 import androidx.navigation.fragment.findNavController
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
 import nl.tudelft.ipv8.util.hexToBytes
@@ -20,7 +17,6 @@ import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionRe
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.RandomSelector
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
-import java.util.Base64
 
 class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_offline_money) {
 
@@ -106,7 +102,8 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 //                    ContactStore.getInstance(requireContext())
 //                        .addContact(key, newName)
 //                }
-                val success = transactionRepository.sendOfflineProposal(publicKey.hexToBytes(), amount, serializedTokens)
+                val tokenBalance = tokenStore.getTotalBalance()
+                val success = transactionRepository.sendOfflineProposal(publicKey.hexToBytes(), tokenBalance, amount, serializedTokens)
                 if (!success) {
                     return@setOnClickListener Toast.makeText(
                         requireContext(),

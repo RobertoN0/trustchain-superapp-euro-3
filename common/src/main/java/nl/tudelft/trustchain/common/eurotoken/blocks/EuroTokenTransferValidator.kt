@@ -4,7 +4,7 @@ import nl.tudelft.ipv8.attestation.trustchain.TrustChainBlock
 import nl.tudelft.ipv8.attestation.trustchain.store.TrustChainStore
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 
-class EuroTokenTransferValidator(transactionRepository: TransactionRepository) : EuroTokenBaseValidator(transactionRepository) {
+open class EuroTokenTransferValidator(transactionRepository: TransactionRepository) : EuroTokenBaseValidator(transactionRepository) {
     override fun validateEuroTokenProposal(
         block: TrustChainBlock,
         database: TrustChainStore

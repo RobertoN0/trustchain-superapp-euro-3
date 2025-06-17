@@ -36,6 +36,17 @@ class TokenStore(context: Context): ITokenStore {
         )
     }
 
+    private val receivedMapper = { id: String, date_received: Long, amount: Long ->
+        BillFaceToken(
+            id               = id,
+            amount           = amount,
+            intermediarySignature = ByteArray(0),
+            isSpent          = false,
+            dateCreated      = 0L,
+            dateReceived     = date_received
+        )
+    }
+
     /**
      * Maps database rows to SimpleBloomFilter objects.
      */
@@ -118,6 +129,32 @@ class TokenStore(context: Context): ITokenStore {
 
     fun createBloomFilterTable() {
         database.dbTokensQueries.createBloomFilterTable()
+    }
+
+    fun createReceivedTokensTable() {
+        database.dbTokensQueries.createTokenReceivedTable()
+    }
+
+    fun saveReceivedToken(token: BillFaceToken) {
+        database.dbTokensQueries.insertTokenReceived(
+            token.id,
+            token.dateReceived!!,
+            token.amount
+        )
+    }
+
+    fun getAllReceivedTokens(): List<BillFaceToken> {
+        return database.dbTokensQueries
+            .getAllReceivedTokens(receivedMapper)
+            .executeAsList()
+    }
+
+    fun getReceivedTokenIds(): List<String> {
+        return database.dbTokensQueries.getReceivedTokenIds().executeAsList()
+    }
+
+    fun deleteReceivedToken(id: String) {
+        database.dbTokensQueries.deleteTokenReceived(id)
     }
 
     /**

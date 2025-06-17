@@ -55,13 +55,7 @@ class TransactionRepository(
         } else if((listOf(BLOCK_TYPE_OFFLINE_TRANSFER).contains(block.type) && block.isProposal)){
             0L
         } else if((listOf(BLOCK_TYPE_OFFLINE_TRANSFER).contains(block.type) && block.isAgreement)){
-            val amount = (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
-            if (block.linkPublicKey.contentEquals(trustChainCommunity.myPeer.publicKey.keyToBin()))
-                // block is sending oflline tokens
-                return 0L
-            else
-                // block is receiving offline tokens -> convert to account balance
-                amount
+            (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
         }else {
             // block does nothing
             0
@@ -162,12 +156,12 @@ class TransactionRepository(
                 database.getBlockWithHash(block.previousHash),
                 database
             )
-        } else if (listOf(BLOCK_TYPE_TRANSFER, BLOCK_TYPE_DESTROY, BLOCK_TYPE_ROLLBACK).contains(
+        } else if (listOf(BLOCK_TYPE_TRANSFER, BLOCK_TYPE_DESTROY, BLOCK_TYPE_ROLLBACK, BLOCK_TYPE_OFFLINE_TRANSFER).contains(
                 block.type
             ) && block.isProposal
         ) {
             Log.d("EuroTokenBlock", "Validation, sending money")
-            if (block.isGenesis) {
+            if (block.isGenesis || block.type == BLOCK_TYPE_OFFLINE_TRANSFER) {
                 return block.transaction[KEY_BALANCE] as Long
             }
             // block is sending money, but balance is not verified, subtract transfer amount and recurse
@@ -212,7 +206,7 @@ class TransactionRepository(
                     BLOCK_TYPE_DESTROY,
                     BLOCK_TYPE_CHECKPOINT,
                     BLOCK_TYPE_ROLLBACK,
-//                    BLOCK_TYPE_OFFLINE_TRANSFER
+                    BLOCK_TYPE_OFFLINE_TRANSFER
                 ).contains(block.type) && block.isProposal
             )
         ) {
@@ -220,31 +214,15 @@ class TransactionRepository(
         } else if (listOf(
                 BLOCK_TYPE_WITHDRAWAL
                 ).contains((block.type))) {
-            // Exclusive withdraw block, just return the balance
             if (block.isGenesis) {
                 return initialBalance - (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
             }
             getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.minus(
                 (block.transaction[KEY_AMOUNT] as BigInteger).toLong())
-
-        } else if (listOf(
-                BLOCK_TYPE_OFFLINE_TRANSFER
-                ).contains((block.type)) && block.isProposal) {
-            (block.transaction[KEY_BALANCE] as Long)
-        } else if (listOf(
-                BLOCK_TYPE_OFFLINE_TRANSFER
-            ).contains((block.type)) && block.isAgreement) {
-            if (block.isGenesis) {
-                return initialBalance + (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
-            }
-            getBalanceForBlock(database.getBlockWithHash(block.previousHash), database)?.plus(
-                (block.transaction[KEY_AMOUNT] as BigInteger).toLong()
-            )
-
         } else if (listOf(
                 BLOCK_TYPE_TRANSFER,
                 BLOCK_TYPE_CREATE,
-                // BLOCK_TYPE_OFFLINE_TRANSFER
+                BLOCK_TYPE_OFFLINE_TRANSFER
             ).contains(block.type) && block.isAgreement
         ) {
             // block is receiving money add it and recurse
@@ -328,27 +306,29 @@ class TransactionRepository(
 
     fun sendOfflineProposal(
         recipient: ByteArray,
+        tokenBalance: Long,
         amount: Long,
         serializedTokens: String
     ): Boolean {
         Log.d("sendTransferProposal", "sending amount: $amount")
-        if (getMyBalance() - amount < 0) {
+        if (tokenBalance - amount < 0) {
             return false
         }
         scope.launch {
-            sendOfflineProposalSync(recipient, amount, serializedTokens)
+            sendOfflineProposalSync(recipient, tokenBalance, amount, serializedTokens)
         }
         return true
     }
 
     fun sendOfflineProposalSync(
         recipient: ByteArray,
+        tokenBalance: Long,
         amount: Long,
         serializedTokens: String
     ): TrustChainBlock? {
         Log.d("sendOfflineProposalSyn", "sending amount: $amount")
 
-        if (getMyBalance() - amount < 0) {
+        if (tokenBalance - amount < 0) {
             return null
         }
         val transaction =
@@ -876,6 +856,39 @@ class TransactionRepository(
         )
     }
 
+    private fun addOfflineTransferListeners() {
+        trustChainCommunity.registerBlockSigner(
+            BLOCK_TYPE_OFFLINE_TRANSFER,
+            object : BlockSigner {
+                override fun onSignatureRequest(block: TrustChainBlock) {
+                    Log.w("EuroTokenBlockOfflineTransfer", "sig request ${block.transaction}")
+                    trustChainCommunity.sendBlock(
+                        trustChainCommunity.createAgreementBlock(
+                            block,
+                            block.transaction
+                        )
+                    )
+                }
+            }
+        )
+
+        trustChainCommunity.addListener(
+            BLOCK_TYPE_OFFLINE_TRANSFER,
+            object : BlockListener {
+                override fun onBlockReceived(block: TrustChainBlock) {
+                    // Auto verifyBalance
+                    if (block.isAgreement && block.publicKey.contentEquals(trustChainCommunity.myPeer.publicKey.keyToBin())) {
+                        verifyBalance()
+                    }
+                    Log.d(
+                        "EuroTokenBlockOfflineTransfer",
+                        "${block.type} onBlockReceived: ${block.blockId} ${block.transaction}"
+                    )
+                }
+            }
+        )
+    }
+
     private fun addJoinListeners() {
         trustChainCommunity.registerTransactionValidator(
             BLOCK_TYPE_JOIN,
@@ -1317,6 +1330,7 @@ class TransactionRepository(
         addCheckpointListeners()
         addRollbackListeners()
         addTradeListeners()
+        addOfflineTransferListeners()
     }
 
     companion object {
