@@ -4,13 +4,40 @@ CREATE TABLE IF NOT EXISTS tokens (
     amount INTEGER NOT NULL,
     intermediary_signature BLOB NOT NULL,
     is_spent INTEGER NOT NULL DEFAULT 0,
-    date_created INTEGER NOT NULL
+    date_created INTEGER NOT NULL,
+    date_received INTEGER
 );
+
+-- Query to create the tokens table
+createTokenReceivedTable:
+CREATE TABLE IF NOT EXISTS token_received (
+    id            TEXT    PRIMARY KEY NOT NULL,
+    date_received INTEGER NOT NULL,
+    amount        INTEGER NOT NULL
+);
+
+-- Query to insert a new token received
+insertTokenReceived:
+INSERT OR REPLACE INTO token_received (id, date_received, amount)
+VALUES (?, ?, ?);
+
+-- Query to get a token received by its ID
+getAllReceivedTokens:
+SELECT * FROM token_received;
+
+-- Query to get a token received by its ID
+getReceivedTokenIds:
+SELECT id FROM token_received;
+
+-- Query to delete a token received by its ID
+deleteTokenReceived:
+DELETE FROM token_received WHERE id = ?;
+
 
 -- Query to insert a new token
 insertToken:
-INSERT OR REPLACE INTO tokens (id, amount, intermediary_signature, is_spent, date_created)
-VALUES (?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO tokens (id, amount, intermediary_signature, is_spent, date_created, date_received)
+VALUES (?, ?, ?, ?, ?, ?);
 
 -- Query to get a token by its ID
 getToken:
@@ -35,3 +62,41 @@ SELECT SUM(amount) AS total FROM tokens WHERE is_spent = 0;
 -- Query to get all unspent tokens
 getUnspentTokens:
 SELECT * FROM tokens WHERE is_spent = 0;
+
+-- Query to get all spent tokens
+getSpentTokens:
+SELECT * FROM tokens WHERE is_spent = 1;
+
+-- Query to update the date received for a token
+updateDateReceived:
+UPDATE tokens
+SET date_received = ?
+WHERE id = ?;
+
+-- Create a table for storing bloom filters
+createBloomFilterTable:
+CREATE TABLE IF NOT EXISTS bloom_filter (
+  id                 TEXT    PRIMARY KEY NOT NULL,
+  num_hash_functions INTEGER NOT NULL,
+  filter_bytes       BLOB    NOT NULL
+);
+
+-- Query to select a bloom filter by its ID
+selectBloomFilter:
+SELECT id, num_hash_functions, filter_bytes
+FROM bloom_filter
+WHERE id = ?;
+
+-- Query to insert or update a bloom filter
+insertOrUpdateBloomFilter:
+INSERT OR REPLACE INTO bloom_filter (
+  id,
+  num_hash_functions,
+  filter_bytes
+) VALUES (
+  ?, ?, ?
+);
+
+-- Query to delete a bloom filter by its ID
+deleteBloomFilter:
+DELETE FROM bloom_filter WHERE id = ?;

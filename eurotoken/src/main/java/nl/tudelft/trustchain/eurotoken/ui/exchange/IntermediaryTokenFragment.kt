@@ -13,7 +13,6 @@ import nl.tudelft.trustchain.common.eurotoken.GatewayStore
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
-import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentIntermediaryBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
@@ -45,7 +44,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
         return tokenStore.getTotalBalance()
     }
 
-    private fun updateBalance(){
+    private fun updateVisualBalance(){
         binding.txtAccountValue.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
         binding.txtTokenValue.text = TransactionRepository.prettyAmount(getTokenBalance())
     }
@@ -71,7 +70,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
                     Toast.makeText(requireContext(), "Gateway not found", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                if(amount >= myBalance) {
+                if(amount > myBalance) {
                     Toast.makeText(requireContext(), "Insufficient Balance", Toast.LENGTH_SHORT)
                         .show()
                     return@setOnClickListener
@@ -79,7 +78,7 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
                 if (amount > 0 && amount % 5 == 0L) {
                     createTokens(amount)
                     transactionRepository.sendWithdrawalProposal(gateway, amount)
-                    updateBalance()
+                    updateVisualBalance()
                 } else {
                     Toast.makeText(requireContext(), "Insert a valid amount", Toast.LENGTH_SHORT).show()
                 }

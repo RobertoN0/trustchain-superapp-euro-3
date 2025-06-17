@@ -147,8 +147,12 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                 connectionData.put("public_key", myPeer.publicKey.keyToBin().toHex())
                 connectionData.put("amount", amount)
                 connectionData.put("name", contact?.name ?: "")
-                connectionData.put("type", "transfer")
-
+                if (isOnline()) {
+                    connectionData.put("type", "transfer")
+                } else {
+                    connectionData.put("type", "offline_transfer")
+                    connectionData.put("seed", "I am a seed for offline transfer")
+                }
                 val args = Bundle()
 
                 args.putString(RequestMoneyFragment.ARG_DATA, connectionData.toString())
@@ -221,7 +225,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                         )
                             .show()
                     }
-                    if (peer != null && euroTokenCommunity != null) {
+                    if (peer != null && euroTokenCommunity != null && connectionData.type != "offline_transfer") {
                         euroTokenCommunity.sendAddressesOfLastTransactions(peer)
                     }
                 } catch (e: Exception) {
@@ -237,6 +241,11 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                 if (connectionData.type == "transfer") {
                     findNavController().navigate(
                         R.id.action_transferFragment_to_sendMoneyFragment,
+                        args
+                    )
+                } else if (connectionData.type == "offline_transfer") {
+                    findNavController().navigate(
+                        R.id.action_transferFragment_to_broadcastFragment,
                         args
                     )
                 } else {
