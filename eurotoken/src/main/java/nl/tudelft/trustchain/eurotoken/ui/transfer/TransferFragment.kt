@@ -225,7 +225,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                         )
                             .show()
                     }
-                    if (peer != null && euroTokenCommunity != null) {
+                    if (peer != null && euroTokenCommunity != null && connectionData.type != "offline_transfer") {
                         euroTokenCommunity.sendAddressesOfLastTransactions(peer)
                     }
                 } catch (e: Exception) {

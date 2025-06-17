@@ -43,7 +43,7 @@ class EuroTokenCommunity(
 
     private var myTokenStore: TokenStore
 
-    private val bfManager: BFSpentMoniesManager
+    val bfManager: BFSpentMoniesManager
 
     private val tokenSigner by lazy { TokenSigner(context) }
 
@@ -80,9 +80,11 @@ class EuroTokenCommunity(
 
     private fun myCheckSpending(transaction: TrustChainTransaction) {
         // Validate the transaction payload
+        Log.d("EuroOfflineValidator", "Validating transaction")
         val serializedTokens = transaction[TransactionRepository.KEY_SERIALIZED_TOKENS] as? String
             ?: throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Tokens not found in transaction")
         // Deserialize the tokens
+        Log.d("EuroOfflineValidator", "Found tokens in transaction, deserializing...")
         val tokens = try {
             BillFaceToken.deserializeTokenList(serializedTokens)
         } catch (e: Exception) {
@@ -95,6 +97,8 @@ class EuroTokenCommunity(
                 "Invalid signature for token ${invalid.id}"
             )
         }
+        Log.d("EuroOfflineValidator", "Deserialized tokens, checking for double spending...")
+        // CHeck if the tokens are valid - signature
 
         if (bfManager.isDoubleSpent(tokens))
             throw EuroTokenOfflineTransferValidator.OfflineDoubleSpendingDetected("Double spending detected for tokens: $tokens")
