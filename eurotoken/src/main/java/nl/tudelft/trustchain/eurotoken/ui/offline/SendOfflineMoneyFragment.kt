@@ -10,6 +10,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
 import nl.tudelft.ipv8.util.hexToBytes
 import nl.tudelft.ipv8.util.toHex
+import nl.tudelft.trustchain.common.contacts.Contact
 import nl.tudelft.trustchain.common.contacts.ContactStore
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 import nl.tudelft.trustchain.common.util.viewBinding
@@ -56,6 +57,11 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         val key = defaultCryptoProvider.keyFromPublicBin(publicKey.hexToBytes())
         val contact = ContactStore.getInstance(view.context).getContactFromPublicKey(key)
         updateBalanceInfo()
+
+        val contacts = ContactStore.getInstance(requireContext())
+        if (contacts.getContactFromPublicKey(key) == null) {
+            contacts.addContact(key, name)
+        }
 
         binding.txtRecipientName.text = "Recipient: $name"
         binding.txtRecipientPublicKey.text = "Public Key: $publicKey"
