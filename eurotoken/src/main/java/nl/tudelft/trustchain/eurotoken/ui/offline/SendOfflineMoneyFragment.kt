@@ -54,13 +54,15 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         val amount = requireArguments().getLong(ARG_AMOUNT)
         val name = requireArguments().getString(SendMoneyFragment.ARG_NAME)!!
         var seed = requireArguments().getString(ARG_SEED)
-        val key = defaultCryptoProvider.keyFromPublicBin(publicKey.hexToBytes())
-        val contact = ContactStore.getInstance(view.context).getContactFromPublicKey(key)
         updateBalanceInfo()
 
+        val key = defaultCryptoProvider.keyFromPublicBin(publicKey.hexToBytes())
         val contacts = ContactStore.getInstance(requireContext())
-        if (contacts.getContactFromPublicKey(key) == null) {
+        val contact = contacts.getContactFromPublicKey(key)
+        if (contact == null) {
             contacts.addContact(key, name)
+        } else if (contact.name != name) {
+            contacts.updateContact(key, name)
         }
 
         binding.txtRecipientName.text = "Recipient: $name"

@@ -19,6 +19,6 @@
         android:title="Intermediary Exchange" />
     <item
         android:id="@+id/bloomFilterStatsFragment"
-        android:icon="@drawable/ic_baseline_check_circle_outline_24"
+        android:icon="@drawable/outline_info_24"
         android:title="Bloom Filter Statistics"/>
 </menu>
