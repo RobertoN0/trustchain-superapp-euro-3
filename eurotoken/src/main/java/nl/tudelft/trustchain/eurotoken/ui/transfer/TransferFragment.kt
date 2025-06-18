@@ -29,6 +29,8 @@ import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentTransferEuroBinding
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
+import nl.tudelft.trustchain.eurotoken.ui.offline.SendOfflineMoneyFragment
+import nl.tudelft.trustchain.eurotoken.ui.offline.SendOfflineMoneyFragment.Companion.ARG_SEED
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -198,6 +200,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                 val args = Bundle()
                 args.putString(SendMoneyFragment.ARG_PUBLIC_KEY, connectionData.publicKey)
                 args.putLong(SendMoneyFragment.ARG_AMOUNT, connectionData.amount)
+                args.putString(SendOfflineMoneyFragment.ARG_SEED, connectionData.seed)
                 args.putString(SendMoneyFragment.ARG_NAME, connectionData.name)
 
                 // Try to send the addresses of the last X transactions to the peer we have just scanned.
@@ -275,6 +278,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
         class ConnectionData(json: String) : JSONObject(json) {
             var publicKey = this.optString("public_key")
             var amount = this.optLong("amount", -1L)
+            var seed = this.optString("seed")
             var name = this.optString("name")
             var type = this.optString("type")
         }

@@ -86,39 +86,93 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="195dp"
             android:orientation="vertical"
             android:padding="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 android:text="Transaction Details"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginBottom="8dp"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/txtRecipientName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text=""
-                android:layout_marginBottom="4dp"/>
+                android:layout_marginBottom="4dp"
+                tools:text="" />
 
             <TextView
                 android:id="@+id/txtRecipientPublicKey"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="Public Key: 4nmZNbpULdgYtjC2CW4NMveU8N6d4WW6"
-                android:layout_marginBottom="4dp"/>
+                android:layout_marginBottom="4dp"
+                tools:text="Public Key: 4nmZNbpULdgYtjC2CW4NMveU8N6d4WW6" />
 
             <TextView
                 android:id="@+id/txtAmount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
-                tools:text="Amount: €5,00"/>
+                tools:text="Amount: €5,00" />
+
+            <TextView
+                android:id="@+id/txtSelectionMethod"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Method" />
         </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#E0E0E0">
+
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtSeedInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:scrollHorizontally="true"
+                android:text="Selected Seed" />
+
+            <TextView
+                android:id="@+id/txtSelectedCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selected count" />
+            <TextView
+                android:id="@+id/txtSelectedAmount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selected amount" />
+            <TextView
+                android:id="@+id/txtProofInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Proof Info" />
+            <TextView
+                android:id="@+id/txtEfficiency"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Efficiency:" />
+
+
+
+        </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
     <!-- Action Buttons -->
