@@ -12,6 +12,7 @@ import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionSt
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.DoubleSpendSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.ForgedTokenSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.MPTSelection
+import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.RandomSelector
 
 class TokenSelectionViewModel(
     private val tokenStore: ITokenStore
@@ -21,6 +22,11 @@ class TokenSelectionViewModel(
 
     private val _selectedTokens = MutableSharedFlow<List<BillFaceToken>>()
     val selectedTokens = _selectedTokens.asSharedFlow()
+
+    fun selectRandomUnspent(amount: Long) {
+        val selector = RandomSelector(tokenStore, 123456789)
+        selectTokens(selector, amount)
+    }
 
     fun selectDoubleSpending(amount: Long) {
         val selector = DoubleSpendSelector(tokenStore)
