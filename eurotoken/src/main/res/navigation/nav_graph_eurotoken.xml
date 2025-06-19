@@ -168,4 +168,9 @@
         android:name="nl.tudelft.trustchain.eurotoken.ui.exchange.IntermediaryTokenFragment"
         android:label="Intermediary Gateway"
         tools:layout="@layout/fragment_intermediary" />
+    <fragment
+        android:id="@+id/bloomFilterStatsFragment"
+        android:name="nl.tudelft.trustchain.eurotoken.ui.offline.BloomFilterStatsFragment"
+        android:label="Bloom Filter Statistics"
+        tools:layout="@layout/fragment_bloom_filter_stats"/>
 </navigation>

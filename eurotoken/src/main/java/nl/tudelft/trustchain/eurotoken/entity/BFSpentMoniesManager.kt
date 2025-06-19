@@ -1,6 +1,9 @@
 package nl.tudelft.trustchain.eurotoken.entity
 
 import android.util.Log
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import nl.tudelft.trustchain.eurotoken.db.SimpleBloomFilter
 import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import kotlin.math.*
@@ -21,6 +24,11 @@ class BFSpentMoniesManager(
     // Optimal hash functions based on target FPR (so it's dynamically set)
     private val numHashFunctions = SimpleBloomFilter.optimalNumOfHashFunctions(falsePositiveRate) // 3% FPR
 
+    private val _bloomFilter = MutableStateFlow(SimpleBloomFilter(bloomFilterCapacity))
+    val bloomFilter: StateFlow<SimpleBloomFilter> = _bloomFilter
+
+    private val _receivedCount = MutableStateFlow(0)
+    val receivedCount: StateFlow<Int> = _receivedCount
 
     // TODO: include a "StatisticalCollector" for collecting detailed statistics (idea: private class here)
     private var lastCleanupTime = System.currentTimeMillis()
@@ -42,8 +50,12 @@ class BFSpentMoniesManager(
         val existing = tokenStore.getBloomFilter(bloomFilterId)
         if (existing == null) {
             val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
-            tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
+            updateBloomFilter(newSharedBloomFilter)
+//            tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
+//            _bloomFilter.value = newSharedBloomFilter
             Log.d(TAG, "Initialize Bloom filter")
+        } else {
+            _bloomFilter.value = existing
         }
     }
 
@@ -71,7 +83,7 @@ class BFSpentMoniesManager(
      */
     fun isDoubleSpent(tokens: List<BillFaceToken>): Boolean {
         val tokens_id = tokenStore.getReceivedTokenIds()
-        Log.d(TAG, "Already received tokens: ${tokens_id.joinToString { ", " }}")
+        Log.d(TAG, "Already received tokens: ${tokens_id.joinToString(", ")}")
         tokens.forEach { token ->
             Log.d(TAG, "Checking for token: ${token.id}")
             val existingToken = tokens_id.contains(token.id)
@@ -122,7 +134,9 @@ class BFSpentMoniesManager(
         previousShared.merge(ourFilter)
 
         if (receivedFilter == null) {
-            tokenStore.saveBloomFilter(bloomFilterId, previousShared)
+            updateBloomFilter(previousShared)
+//            tokenStore.saveBloomFilter(bloomFilterId, previousShared)
+//            _bloomFilter.value = previousShared
             Log.d(TAG, "No received filter, using our shared filter")
             return Pair(previousShared, RESULT_ONLY_OURS)
         }
@@ -133,7 +147,8 @@ class BFSpentMoniesManager(
 
         if (combinedWithReceived.estimateSize() <= expectedItems) {
             // Success: include the received BF
-            tokenStore.saveBloomFilter(bloomFilterId, combinedWithReceived)
+            updateBloomFilter(combinedWithReceived)
+//            tokenStore.saveBloomFilter(bloomFilterId, combinedWithReceived)
             Log.d(TAG, "Successfully included received filter. Combined size: ${combinedWithReceived.estimateSize()}")
             // TODO: include "StatisticalCollector"
             return Pair(combinedWithReceived, RESULT_INCLUDED_RECEIVED)
@@ -147,7 +162,8 @@ class BFSpentMoniesManager(
 
         if (resetFilter.estimateSize() <= expectedItems) {
             // Reset the shared BF
-            tokenStore.saveBloomFilter(bloomFilterId, resetFilter)
+            updateBloomFilter(resetFilter)
+//            tokenStore.saveBloomFilter(bloomFilterId, resetFilter)
             Log.d(TAG, "Reset strategy successful. New filter size: ${resetFilter.estimateSize()}")
             return Pair(resetFilter, RESULT_RESET_SHARED)
         }
@@ -156,11 +172,13 @@ class BFSpentMoniesManager(
 
         // Step 6: Keep previous or return our own
         if (previousShared.estimateSize() <= expectedItems) {
-            tokenStore.saveBloomFilter(bloomFilterId, previousShared)
+            updateBloomFilter(previousShared)
+//            tokenStore.saveBloomFilter(bloomFilterId, previousShared)
             Log.d(TAG, "Keeping previous shared filter. Size: ${previousShared.estimateSize()}")
             return Pair(previousShared, RESULT_KEPT_PREVIOUS)
         } else {
-            tokenStore.saveBloomFilter(bloomFilterId, ourFilter)
+            updateBloomFilter(ourFilter)
+//            tokenStore.saveBloomFilter(bloomFilterId, ourFilter)
             Log.d(TAG, "Previous filter too large, using only our filter. Size: ${ourFilter.estimateSize()}")
             return Pair(ourFilter, RESULT_ONLY_OURS)
         }
@@ -178,6 +196,7 @@ class BFSpentMoniesManager(
             Log.d(TAG, "Processed received Bloom filter. Result: $resultCode, " +
                 "New shared filter size: ${newSharedFilter?.estimateSize() ?: 0}")
 
+            _receivedCount.update { it + 1 }
             newSharedFilter != null
 
         } catch (e: Exception) {
@@ -240,7 +259,8 @@ class BFSpentMoniesManager(
 
         if (getAllReceivedTokens().isEmpty()) {
             val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
-            tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
+            updateBloomFilter(newSharedBloomFilter)
+//            tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
         }
 
         lastCleanupTime = currentTime
@@ -258,7 +278,8 @@ class BFSpentMoniesManager(
             tokenStore.deleteReceivedToken(token.id)
         }
         val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
-        tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
+        updateBloomFilter(newSharedBloomFilter)
+//        tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
         Log.d(TAG, "All data cleared")
     }
 
@@ -277,7 +298,8 @@ class BFSpentMoniesManager(
             tokenStore.deleteReceivedToken(token.id)
         }
         val newSharedBloomFilter = SimpleBloomFilter(bloomFilterCapacity, numHashFunctions)
-        tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
+        updateBloomFilter(newSharedBloomFilter)
+//        tokenStore.saveBloomFilter(bloomFilterId, newSharedBloomFilter)
         Log.d(TAG, "Cleared expired data")
     }
 
@@ -291,6 +313,11 @@ class BFSpentMoniesManager(
 
     fun getAllReceivedTokens(): List<BillFaceToken> {
         return tokenStore.getAllReceivedTokens()
+    }
+
+    private fun updateBloomFilter(bloomFilter: SimpleBloomFilter) {
+        tokenStore.saveBloomFilter(bloomFilterId, bloomFilter)
+        _bloomFilter.value = bloomFilter
     }
 
     /**

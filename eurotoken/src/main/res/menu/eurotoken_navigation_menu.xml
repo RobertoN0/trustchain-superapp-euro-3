@@ -17,4 +17,8 @@
         android:id="@+id/intermediaryFragment"
         android:icon="@drawable/ic_baseline_currency_exchange_24"
         android:title="Intermediary Exchange" />
+    <item
+        android:id="@+id/bloomFilterStatsFragment"
+        android:icon="@drawable/outline_info_24"
+        android:title="Bloom Filter Statistics"/>
 </menu>
