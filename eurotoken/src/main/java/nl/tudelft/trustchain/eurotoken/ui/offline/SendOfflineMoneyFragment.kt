@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
 import nl.tudelft.ipv8.util.hexToBytes
@@ -17,314 +19,166 @@ import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.entity.mpt.MPTSelectionProof
 import nl.tudelft.trustchain.eurotoken.entity.mpt.MPTTokenSelectionHelper
 import nl.tudelft.trustchain.eurotoken.entity.mpt.TokenMPTUtils
+import nl.tudelft.trustchain.eurotoken.offlinePayment.TokenSelectionViewModel
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
 
 class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_offline_money) {
-
-
     private val binding by viewBinding(FragmentSendOfflineMoneyBinding::bind)
-    private var selectedTokens = emptyList<BillFaceToken>()
-    private var selectionProof : MPTSelectionProof? = null
-    private val mptSelectionHelper = MPTTokenSelectionHelper()
+    private var selectionProof: MPTSelectionProof? = null
 
-    private val previousSelections = mutableListOf<List<BillFaceToken>>()
+    private val tokenSelectionViewModel: TokenSelectionViewModel by activityViewModels()
 
     private val ownPublicKey by lazy {
         defaultCryptoProvider.keyFromPublicBin(
-            transactionRepository.trustChainCommunity.myPeer.publicKey.keyToBin().toHex()
+            transactionRepository.trustChainCommunity.myPeer.publicKey
+                .keyToBin()
+                .toHex()
                 .hexToBytes()
         )
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val seed = arguments?.getString(ARG_SEED)
-        val amount = arguments?.getLong(ARG_AMOUNT)!!
-
-        selectedTokens = if (!seed.isNullOrEmpty()) {
-            selectTokensForAmountMPT(amount, seed)
-        } else {
-            // Generate default seed if none provided for backward compatibility
-            val defaultSeed = TokenMPTUtils.createMerchantSeed(
-                merchantPublicKey = arguments?.getString(ARG_PUBLIC_KEY) ?: "",
-                timestamp = System.currentTimeMillis()
-            )
-            Log.d("MPT", "had to create a defult seed since $seed as been reconized as null or empty. Defualt seed: $defaultSeed")
-            selectTokensForAmountMPT(amount, defaultSeed)
-        }
-
-        // Generate cryptographic proof for the selection
-        //if (selectedTokens.isNotEmpty()) {
-        //    val allTokens = tokenStore.getUnspentTokens()
-        //    selectionProof = mptSelectionHelper.generateSelectionProof(allTokens, selectedTokens)
-        //}
-
-        Log.d("MPT", "Selected ${selectedTokens.size} tokens for the transaction using ${if (seed.isNullOrEmpty()) "simple" else "MPT"} selection")
-        Log.d("MPT", "Token list: ${selectedTokens}")
-        Toast.makeText(
-            requireContext(),
-            "Selected ${selectedTokens.size} tokens for the transaction using ${if (seed.isNullOrEmpty()) "simple" else "MPT"} selection",
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         val publicKey = requireArguments().getString(ARG_PUBLIC_KEY)!!
         val amount = requireArguments().getLong(ARG_AMOUNT)
         val name = requireArguments().getString(SendMoneyFragment.ARG_NAME)!!
-        val seed = requireArguments().getString(ARG_SEED)
+        val seed =
+            requireArguments().getString(ARG_SEED)
+                ?: TokenMPTUtils.createMerchantSeed(
+                    merchantPublicKey = arguments?.getString(ARG_PUBLIC_KEY) ?: "",
+                    timestamp = System.currentTimeMillis()
+                )
         val key = defaultCryptoProvider.keyFromPublicBin(publicKey.hexToBytes())
         val contact = ContactStore.getInstance(view.context).getContactFromPublicKey(key)
 
         updateBalanceInfo()
-        updateSelectionInfo(seed, amount)
 
         binding.txtRecipientName.text = "Recipient: $name"
         binding.txtRecipientPublicKey.text = "Public Key: $publicKey"
         binding.txtAmount.text = "Amount: ${TransactionRepository.prettyAmount(amount)}"
 
         binding.btnSend.setOnClickListener {
-            handleSendTransaction(publicKey, amount, seed)
+            tokenSelectionViewModel.selectMPT(amount, seed)
         }
 
-        // Setup double spend button
         binding.btnDoubleSpend.setOnClickListener {
-            handleDoubleSpendTest(publicKey, amount, seed)
-        }
-    }
-
-    /**
-     * NEW METHOD: MPT-based token selection replacing the original selectTokensForAmount
-     * This implements Algorithm 1 from the paper using existing MPT infrastructure
-     */
-    private fun selectTokensForAmountMPT(amount: Long, merchantSeed: String): List<BillFaceToken> {
-        val unspentTokens = tokenStore.getUnspentTokens()
-
-        if (unspentTokens.isEmpty()) {
-            Toast.makeText(requireContext(), "No tokens available", Toast.LENGTH_LONG).show()
-            return emptyList()
+            tokenSelectionViewModel.selectDoubleSpending(amount)
         }
 
-        val totalAvailable = unspentTokens.sumOf { it.amount }
-        if (totalAvailable < amount) {
-            Toast.makeText(requireContext(), "Insufficient tokens available", Toast.LENGTH_LONG).show()
-            return emptyList()
-        }
-
-        return try {
-            // Use MPT-based deterministic selection (Algorithm 1)
-            // IMPORTANT: selectTokensForAmountMPT build a new MPT starting from the unspentToken list
-            val selectedTokens = mptSelectionHelper.selectTokensForAmountMPT(
-                unspentTokens,
-                amount,
-                merchantSeed
-            )
-
-            Log.d("MPT", "Total selected token: ${selectedTokens.size}, token list: $selectedTokens")
-
-            val selectedSum = selectedTokens.sumOf { it.amount }
-            if (selectedSum < amount) {
-                Toast.makeText(
-                    requireContext(),
-                    "Selected amount insufficient: $selectedSum < $amount",
-                    Toast.LENGTH_LONG
-                ).show()
-                selectTokensForAmount(amount)
-            } else {
-                selectedTokens
-            }
-
-        } catch (e: Exception) {
-            Toast.makeText(
-                requireContext(),
-                "MPT selection error: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
-
-            // Fallback to original method
-            selectTokensForAmount(amount)
-        }
-    }
-
-    /**
-     * Fallback for compatibility
-     * This is the original simple random selection method
-     */
-    private fun selectTokensForAmount(amount: Long): List<BillFaceToken> {
-        val unspentTokens = tokenStore.getUnspentTokens()
-        val totalAvailable = unspentTokens.sumOf { it.amount }
-
-        if (totalAvailable < amount) {
-            Toast.makeText(requireContext(), "Not enough tokens available", Toast.LENGTH_LONG).show()
-            return emptyList()
-        }
-
-        val shuffledTokens = unspentTokens.shuffled()
-        val selectedTokens = mutableListOf<BillFaceToken>()
-        var currentSum = 0L
-
-        for (token in shuffledTokens) {
-            selectedTokens.add(token)
-            currentSum += token.amount
-            if (currentSum >= amount) {
-                break
+        lifecycleScope.launchWhenStarted {
+            tokenSelectionViewModel.error.collect { errorMessage ->
+                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
             }
         }
 
-        return selectedTokens
+        lifecycleScope.launchWhenStarted {
+            tokenSelectionViewModel.selectedTokens.collect { tokens ->
+                handleSendTransaction(publicKey, amount, seed, tokens)
+            }
+        }
     }
 
     /**
      * Enhanced transaction handling with MPT proof
      */
-    private fun handleSendTransaction(publicKey: String, amount: Long, seed: String?) {
+    private fun handleSendTransaction(
+        publicKey: String,
+        amount: Long,
+        seed: String?,
+        tokens: List<BillFaceToken>
+    ) {
         if (isOnline()) {
-            Toast.makeText(
-                requireContext(),
-                "Online transactions are not supported in this mode",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast
+                .makeText(
+                    requireContext(),
+                    "Online transactions are not supported in this mode",
+                    Toast.LENGTH_LONG
+                ).show()
             Log.d("MPT", "Online transactions are not supported in this mode")
             return
         }
 
-        if (selectedTokens.isEmpty()) {
-            Toast.makeText(
-                requireContext(),
-                "No tokens selected for transaction",
-                Toast.LENGTH_LONG
-            ).show()
+        if (tokens.isEmpty()) {
+            Toast
+                .makeText(
+                    requireContext(),
+                    "No tokens selected for transaction",
+                    Toast.LENGTH_LONG
+                ).show()
             Log.d("MPT", "No tokens selected for transaction")
             return
         }
 
         try {
             // Serialize tokens for transmission
-            val serializedTokens = BillFaceToken.serializeTokenList(selectedTokens)
+            val serializedTokens = BillFaceToken.serializeTokenList(tokens)
             val sizeInBytes = serializedTokens.toByteArray(Charsets.UTF_8).size
 
-            // Include MPT proof in the transaction for verification
-            //val proofData = selectionProof?.let { proof ->
-            //    "MPT_PROOF:${proof.rootHash.joinToString("") { "%02x".format(it) }}:${proof.selectedTokenIds.joinToString(",")}"
-            //} ?: ""
-
             // Log selection for debugging
-            val selectionInfo = TokenMPTUtils.formatTokenSelection(selectedTokens, seed)
-            Log.d("MPT","MPT Selection: $selectionInfo")
+            val selectionInfo = TokenMPTUtils.formatTokenSelection(tokens, seed)
+            Log.d("MPT", "MPT Selection: $selectionInfo")
 
-            Toast.makeText(
-                requireContext(),
-                "Sending ${selectedTokens.size} tokens (${sizeInBytes} bytes) with MPT proof",
-                Toast.LENGTH_SHORT
-            ).show()
-            Log.d("MPT", "Sending ${selectedTokens.size} tokens (${sizeInBytes} bytes) with MPT proof")
+            Toast
+                .makeText(
+                    requireContext(),
+                    "Sending ${tokens.size} tokens ($sizeInBytes bytes) with MPT proof",
+                    Toast.LENGTH_SHORT
+                ).show()
+            Log.d("MPT", "Sending ${tokens.size} tokens ($sizeInBytes bytes) with MPT proof")
 
             val tokenBalance = tokenStore.getTotalBalance()
-            val success = transactionRepository.sendOfflineProposal(
-                publicKey.hexToBytes(),
-                tokenBalance,
-                amount,
-                serializedTokens
-            )
+            val success =
+                transactionRepository.sendOfflineProposal(
+                    publicKey.hexToBytes(),
+                    tokenBalance,
+                    amount,
+                    serializedTokens
+                )
 
             if (!success) {
-                Toast.makeText(
-                    requireContext(),
-                    "Transaction failed: Insufficient balance",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Transaction failed: Insufficient balance",
+                        Toast.LENGTH_LONG
+                    ).show()
                 Log.d("MPT", "Transaction failed: Insufficient balance")
                 return
             }
 
-            // Store this selection for double-spend detection
-            previousSelections.add(selectedTokens)
-
-            Toast.makeText(
-                requireContext(),
-                "MPT-based offline transaction sent successfully",
-                Toast.LENGTH_SHORT
-            ).show()
-            Log.d("MPT","MPT-based offline transaction sent successfully")
-
-
-            findNavController().navigate(R.id.action_sendOfflineMoneyFragment_to_transactionsFragment)
-
-        } catch (e: Exception) {
-            Toast.makeText(
-                requireContext(),
-                "Transaction error: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
-            Log.d("MPT", "Transaction error: ${e.message}")
-        }
-    }
-
-    /**
-     * Test double-spending prevention
-     */
-    private fun handleDoubleSpendTest(publicKey: String, amount: Long, seed: String?) {
-        if (seed.isNullOrEmpty()) {
-            Toast.makeText(
-                requireContext(),
-                "Double-spend test requires merchant seed",
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
-
-        try {
-            val allTokens = tokenStore.getUnspentTokens()
-
-            // Detect double-spend attempt using utility
-            val isDoubleSpend = TokenMPTUtils.detectDoubleSpendAttempt(
-                originalTokens = allTokens,
-                seed = seed,
-                amount = amount,
-                previousSelections = previousSelections
-            )
-
-            if (isDoubleSpend) {
-                Toast.makeText(
+            Toast
+                .makeText(
                     requireContext(),
-                    "⚠️ DOUBLE-SPEND DETECTED! Same tokens would be selected again.",
-                    Toast.LENGTH_LONG
-                ).show()
-            } else {
-                Toast.makeText(
-                    requireContext(),
-                    "✅ No double-spend detected. Selection is safe.",
+                    "MPT-based offline transaction sent successfully",
                     Toast.LENGTH_SHORT
                 ).show()
-            }
+            Log.d("MPT", "MPT-based offline transaction sent successfully")
 
-            // Generate new selection for comparison
-            val testSelection = mptSelectionHelper.selectTokensForAmountMPT(allTokens, amount, seed)
-            val sameSelection = TokenMPTUtils.compareSelections(selectedTokens, testSelection)
-
-            Toast.makeText(
-                requireContext(),
-                "Selection comparison: ${if (sameSelection) "IDENTICAL (Deterministic OK)" else "DIFFERENT (Error!)"}",
-                Toast.LENGTH_SHORT
-            ).show()
-
+            findNavController().navigate(R.id.action_sendOfflineMoneyFragment_to_transactionsFragment)
         } catch (e: Exception) {
-            Toast.makeText(
-                requireContext(),
-                "Double-spend test failed: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast
+                .makeText(
+                    requireContext(),
+                    "Transaction error: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            Log.d("MPT", "Transaction error: ${e.message}")
         }
     }
 
     /**
      * Update selection information display (for debugging purposes)
      */
-    private fun updateSelectionInfo(seed: String?, amount: Long) {
+    private fun updateSelectionInfo(
+        seed: String?,
+        amount: Long,
+        selectedTokens: List<BillFaceToken>
+    ) {
         val selectionMethod = if (seed.isNullOrEmpty()) "Auto-Generated Seed" else "Merchant Seed"
         val seedDisplay = seed?.take(8) ?: "auto-gen"
 
@@ -367,12 +221,13 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
             merchantSeed: String? = null
         ): SendOfflineMoneyFragment {
             val fragment = SendOfflineMoneyFragment()
-            val args = Bundle().apply {
-                putLong(ARG_AMOUNT, amount)
-                putString(ARG_PUBLIC_KEY, publicKey)
-                putString(ARG_NAME, name)
-                merchantSeed?.let { putString(ARG_SEED, it) }
-            }
+            val args =
+                Bundle().apply {
+                    putLong(ARG_AMOUNT, amount)
+                    putString(ARG_PUBLIC_KEY, publicKey)
+                    putString(ARG_NAME, name)
+                    merchantSeed?.let { putString(ARG_SEED, it) }
+                }
             fragment.arguments = args
             return fragment
         }
@@ -380,8 +235,9 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         /**
          * Create deterministic seed for testing
          */
-        fun createTestSeed(merchantId: String, scenario: String = "default"): String {
-            return TokenMPTUtils.createTestSeed(scenario)
-        }
+        fun createTestSeed(
+            merchantId: String,
+            scenario: String = "default"
+        ): String = TokenMPTUtils.createTestSeed(scenario)
     }
 }
