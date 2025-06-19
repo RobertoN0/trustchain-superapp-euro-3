@@ -8,11 +8,14 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
@@ -36,6 +39,7 @@ import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.entity.TokenSigner
 
 open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(contentLayoutId) {
     protected val logger = KotlinLogging.logger {}
@@ -61,6 +65,9 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
     private val euroTokenCommunity by lazy {
         getIpv8().getOverlay<EuroTokenCommunity>()!!
     }
+
+    protected val tokenSigner by lazy { TokenSigner(requireContext()) }
+
 
     private val contactStore by lazy {
         ContactStore.getInstance(requireContext())
@@ -89,6 +96,7 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
 
                         Log.d("EuroOfflineValidator", "Adding spent tokens to BF")
                         euroTokenCommunity.bfManager.addReceivedMoney(tokens)
+
                         euroTokenCommunity.broadcastBloomFilter()
                     }
                     else {
@@ -119,6 +127,24 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
             }
         }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        euroTokenCommunity.securityAlerts.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { message ->
+                showBlockingAlert(message)
+            }
+        }
+    }
+
+    private fun showBlockingAlert(msg: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Security alert")
+            .setMessage(msg)
+            .setCancelable(false)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -140,6 +166,9 @@ open class EurotokenBaseFragment(contentLayoutId: Int = 0) : BaseFragment(conten
             "table",
             "Creating bloom filter table in EurotokenBaseFragment"
         )
+
+
+
         lifecycleScope.launchWhenResumed {
         }
     }

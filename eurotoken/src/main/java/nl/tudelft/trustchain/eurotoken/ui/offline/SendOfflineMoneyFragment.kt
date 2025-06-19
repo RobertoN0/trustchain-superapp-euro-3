@@ -92,7 +92,7 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
             return
         }
 
-        val serializedTokens = serializeTokens(selectedTokens)
+        val serializedTokens = BillFaceToken.serializeTokenList(selectedTokens)
         val sizeInBytes: Int = serializedTokens.toByteArray(Charsets.UTF_8).size
         Toast
             .makeText(
@@ -131,25 +131,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
     private fun updateBalanceInfo() {
         binding.txtAccountBalance.text = TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
         binding.txtTokenBalance.text = TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun serializeTokens(tokens: List<BillFaceToken>): String {
-        val bytes =
-            ProtoBuf.encodeToByteArray(
-                ListSerializer(BillFaceToken.serializer()),
-                tokens
-            )
-        return Base64.getEncoder().encodeToString(bytes)
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun deserializeTokens(b64: String): List<BillFaceToken> {
-        val bytes = Base64.getDecoder().decode(b64)
-        return ProtoBuf.decodeFromByteArray(
-            ListSerializer(BillFaceToken.serializer()),
-            bytes
-        )
     }
 
     companion object {
