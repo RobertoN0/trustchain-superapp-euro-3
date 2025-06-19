@@ -94,7 +94,8 @@ class EuroTokenCommunity(
         } catch (e: Exception) {
             throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Failed to deserialize tokens")
         }
-        tokens[0].amount += 5L
+
+
         val invalid = tokens.firstOrNull { !tokenSigner.verify(it) }
         if (invalid != null) {
             _securityAlerts.postValue(
