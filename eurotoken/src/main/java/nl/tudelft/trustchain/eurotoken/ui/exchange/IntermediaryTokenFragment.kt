@@ -116,13 +116,16 @@ class IntermediaryTokenFragment : EurotokenBaseFragment(R.layout.fragment_interm
             )
             val token = BillFaceToken(
                 id = tokenId,
-                amount = TOKEN_FIXED_VALUE,
-                intermediarySignature = signature
+                amount = TOKEN_FIXED_VALUE ,
+                intermediarySignature = signature,
+                dateCreated = timestamp
             )
-
+            val success = tokenSigner.verify(token)
+            if (!success) {
+                Log.e(TAG, "Failed to verify token signature for ID: ${token.id}")
+            }
             generatedTokens.add(token)
             tokenStore.saveToken(token)
-
             Log.d(TAG, "Created token: ID=${token.id}, Amount=${token.amount}, Signature=${token.intermediarySignature}, Timestamp=${token.dateCreated}")
         }
 
