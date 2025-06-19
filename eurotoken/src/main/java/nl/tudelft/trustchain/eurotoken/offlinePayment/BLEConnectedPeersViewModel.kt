@@ -36,7 +36,7 @@ class BLEConnectedPeersViewModel(
     private fun getPeerName(peer: Peer): String {
         val contact = contacts.getContactFromPublicKey(peer.publicKey)
         return if (contact == null || contact.name == "") {
-            "Unknown"
+            peer.bluetoothAddress!!.mac
         } else {
             contact.name
         }
