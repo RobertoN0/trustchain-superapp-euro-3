@@ -196,6 +196,14 @@
             android:text="Double Spend"
             android:textColor="@color/white"
             android:backgroundTint="@color/cardview_dark_background"/>
+
+        <Button
+            android:id="@+id/btnForgedSpend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Forged Spend"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/cardview_dark_background"/>
     </LinearLayout>
 
 </LinearLayout>

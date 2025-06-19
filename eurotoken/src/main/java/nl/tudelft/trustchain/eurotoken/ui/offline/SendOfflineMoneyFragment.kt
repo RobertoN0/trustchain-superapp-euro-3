@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import nl.tudelft.ipv8.keyvault.defaultCryptoProvider
@@ -15,12 +16,16 @@ import nl.tudelft.trustchain.common.contacts.ContactStore
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
 import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
+import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentSendOfflineMoneyBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.entity.mpt.MPTSelectionProof
 import nl.tudelft.trustchain.eurotoken.entity.mpt.MPTTokenSelectionHelper
 import nl.tudelft.trustchain.eurotoken.entity.mpt.TokenMPTUtils
+import nl.tudelft.trustchain.eurotoken.offlinePayment.BLEConnectedPeersViewModel
+import nl.tudelft.trustchain.eurotoken.offlinePayment.BLEConnectedPeersViewModelFactory
 import nl.tudelft.trustchain.eurotoken.offlinePayment.TokenSelectionViewModel
+import nl.tudelft.trustchain.eurotoken.offlinePayment.TokenSelectionViewModelFactory
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
 
@@ -28,13 +33,14 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
     private val binding by viewBinding(FragmentSendOfflineMoneyBinding::bind)
     private var selectionProof: MPTSelectionProof? = null
 
-    private val tokenSelectionViewModel: TokenSelectionViewModel by activityViewModels()
+    private lateinit var tokenSelectionViewModel: TokenSelectionViewModel
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
         super.onViewCreated(view, savedInstanceState)
+        initTokenSelectionViewModel()
 
         val publicKey = requireArguments().getString(ARG_PUBLIC_KEY)!!
         val amount = requireArguments().getLong(ARG_AMOUNT)
@@ -65,6 +71,10 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
         binding.btnDoubleSpend.setOnClickListener {
             tokenSelectionViewModel.selectDoubleSpending(amount)
+        }
+
+        binding.btnForgedSpend.setOnClickListener {
+            tokenSelectionViewModel.selectForged(amount)
         }
 
         lifecycleScope.launchWhenStarted {
@@ -202,39 +212,15 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
             TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
     }
 
+    private fun initTokenSelectionViewModel() {
+        val factory = TokenSelectionViewModelFactory(tokenStore)
+        tokenSelectionViewModel = ViewModelProvider(this, factory).get(TokenSelectionViewModel::class.java)
+    }
+
     companion object {
         const val ARG_AMOUNT = "amount"
         const val ARG_PUBLIC_KEY = "pubkey"
         const val ARG_NAME = "name"
-        const val ARG_SEED = "seed" // NEW: Added seed argument
-
-        /**
-         * Create instance with MPT support
-         */
-        fun newInstanceWithMPT(
-            amount: Long,
-            publicKey: String,
-            name: String,
-            merchantSeed: String? = null
-        ): SendOfflineMoneyFragment {
-            val fragment = SendOfflineMoneyFragment()
-            val args =
-                Bundle().apply {
-                    putLong(ARG_AMOUNT, amount)
-                    putString(ARG_PUBLIC_KEY, publicKey)
-                    putString(ARG_NAME, name)
-                    merchantSeed?.let { putString(ARG_SEED, it) }
-                }
-            fragment.arguments = args
-            return fragment
-        }
-
-        /**
-         * Create deterministic seed for testing
-         */
-        fun createTestSeed(
-            merchantId: String,
-            scenario: String = "default"
-        ): String = TokenMPTUtils.createTestSeed(scenario)
+        const val ARG_SEED = "seed"
     }
 }

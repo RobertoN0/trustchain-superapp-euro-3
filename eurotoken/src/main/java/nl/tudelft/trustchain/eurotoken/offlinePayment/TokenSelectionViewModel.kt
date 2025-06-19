@@ -1,16 +1,16 @@
 package nl.tudelft.trustchain.eurotoken.offlinePayment
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionResult
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionStrategy
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.DoubleSpendSelector
+import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.ForgedTokenSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.MPTSelection
 
 class TokenSelectionViewModel(
@@ -27,8 +27,13 @@ class TokenSelectionViewModel(
         selectTokens(selector, amount)
     }
 
-    fun selectMPT(amount:Long, seed: String) {
+    fun selectMPT(amount: Long, seed: String) {
         val selector = MPTSelection(tokenStore, seed)
+        selectTokens(selector, amount)
+    }
+
+    fun selectForged(amount: Long) {
+        val selector = ForgedTokenSelector(tokenStore)
         selectTokens(selector, amount)
     }
 
@@ -43,5 +48,17 @@ class TokenSelectionViewModel(
             }
         }
 
+    }
+}
+
+class TokenSelectionViewModelFactory(
+    private val tokenStore: ITokenStore
+): ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TokenSelectionViewModel::class.java)) {
+            return TokenSelectionViewModel(tokenStore) as T
+        }
+        throw IllegalStateException("Unknown ViewModel class")
     }
 }
