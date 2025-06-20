@@ -7,11 +7,11 @@ import java.util.Base64
 
 @Serializable
 data class BillFaceToken(
-    val id: String, // Combinazione di peerId e nonce
-    val amount: Long,
+    val id: String,
+    var amount: Long,
     val intermediarySignature: ByteArray,
     val isSpent: Boolean = false,
-    val dateCreated: Long = System.currentTimeMillis(),
+    val dateCreated: Long,
     var dateReceived: Long? = null
 ) {
     companion object {

@@ -143,6 +143,7 @@ class TransactionsFragment : EurotokenBaseFragment(R.layout.fragment_transaction
                         false
                     )
 
+                binding.txtTokenBalance.text = TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
                 if (demoModeEnabled) {
                     binding.txtBalance.text =
                         TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
@@ -184,6 +185,7 @@ class TransactionsFragment : EurotokenBaseFragment(R.layout.fragment_transaction
                         false
                     )
 
+                binding.txtTokenBalance.text = TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
                 if (demoModeEnabled) {
                     binding.txtBalance.text =
                         TransactionRepository.prettyAmount(transactionRepository.getMyBalance())

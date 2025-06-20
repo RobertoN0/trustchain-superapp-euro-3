@@ -24,7 +24,6 @@ import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
 
 class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_offline_money) {
     private val binding by viewBinding(FragmentSendOfflineMoneyBinding::bind)
-    private var selectionProof: MPTSelectionProof? = null
 
     private lateinit var tokenSelectionViewModel: TokenSelectionViewModel
 
@@ -108,18 +107,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         val serializedTokens = BillFaceToken.serializeTokenList(tokens)
         val sizeInBytes = serializedTokens.toByteArray(Charsets.UTF_8).size
 
-        // Log selection for debugging
-//            val selectionInfo = TokenMPTUtils.formatTokenSelection(tokens, seed)
-//            Log.d("MPT", "MPT Selection: $selectionInfo")
-//
-//            Toast
-//                .makeText(
-//                    requireContext(),
-//                    "Sending ${tokens.size} tokens ($sizeInBytes bytes) with MPT proof",
-//                    Toast.LENGTH_SHORT
-//                ).show()
-//            Log.d("MPT", "Sending ${tokens.size} tokens ($sizeInBytes bytes) with MPT proof")
-
         val tokenBalance = tokenStore.getTotalBalance()
         val success =
             transactionRepository.sendOfflineProposal(
@@ -150,33 +137,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
         findNavController().navigate(R.id.action_sendOfflineMoneyFragment_to_transactionsFragment)
     }
-
-    /**
-     * Update selection information display (for debugging purposes)
-     */
-//    private fun updateSelectionInfo(
-//        seed: String?,
-//        amount: Long,
-//        selectedTokens: List<BillFaceToken>
-//    ) {
-//        val selectionMethod = if (seed.isNullOrEmpty()) "Auto-Generated Seed" else "Merchant Seed"
-//        val seedDisplay = seed?.take(8) ?: "auto-gen"
-//
-//        // Update UI elements if they exist in the layout
-//        binding.txtSelectionMethod?.text = "Method: MPT Algorithm ($selectionMethod)"
-//        binding.txtSeedInfo?.text = "Seed: $seedDisplay..."
-//        binding.txtSelectedCount?.text = "Selected: ${selectedTokens.size} tokens"
-//        binding.txtSelectedAmount?.text = "Total: ${TransactionRepository.prettyAmount(selectedTokens.sumOf { it.amount })}"
-//
-//        // Show proof information if available
-//        selectionProof?.let { proof ->
-//            binding.txtProofInfo?.text = "MPT Root: ${proof.rootHash.take(8).joinToString("") { "%02x".format(it) }}..."
-//        }
-//
-//        // Calculate and display selection efficiency
-//        val efficiency = TokenMPTUtils.calculateSelectionEfficiency(amount, selectedTokens)
-//        binding.txtEfficiency?.text = "Efficiency: ${String.format("%.1f", efficiency * 100)}%"
-//    }
 
     private fun updateBalanceInfo() {
         binding.txtAccountBalance.text =

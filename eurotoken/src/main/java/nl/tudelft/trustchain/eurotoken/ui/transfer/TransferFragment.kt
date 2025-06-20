@@ -60,6 +60,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                         false
                     )
 
+                binding.txtTokenBalance.text = TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
                 if (demoModeEnabled) {
                     binding.txtBalance.text =
                         TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
@@ -99,6 +100,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                 false
             )
 
+        binding.txtTokenBalance.text = TransactionRepository.prettyAmount(tokenStore.getTotalBalance())
         if (demoModeEnabled) {
             binding.txtBalance.text =
                 TransactionRepository.prettyAmount(transactionRepository.getMyBalance())
@@ -106,7 +108,7 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
             binding.txtBalance.text =
                 TransactionRepository.prettyAmount(transactionRepository.getMyVerifiedBalance())
         }
-        binding.txtOwnPublicKey.text = ownKey.keyToHash().toHex()
+//        binding.txtOwnPublicKey.text = ownKey.keyToHash().toHex()
 
         if (ownContact?.name != null) {
             binding.missingNameLayout.visibility = View.GONE

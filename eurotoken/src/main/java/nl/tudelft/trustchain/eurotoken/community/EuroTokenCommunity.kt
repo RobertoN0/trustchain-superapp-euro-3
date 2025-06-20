@@ -26,6 +26,8 @@ import nl.tudelft.trustchain.eurotoken.db.TokenStore
 import nl.tudelft.trustchain.eurotoken.db.TrustStore
 import nl.tudelft.trustchain.eurotoken.entity.BFSpentMoniesManager
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
+import nl.tudelft.trustchain.eurotoken.entity.Event
+import nl.tudelft.trustchain.eurotoken.entity.TokenSigner
 import nl.tudelft.trustchain.eurotoken.ui.settings.DefaultGateway
 
 data class BroadcastMessage(val senderId: String, val message: String)
@@ -44,6 +46,8 @@ class EuroTokenCommunity(
 
     val bfManager: BFSpentMoniesManager
 
+    private val tokenSigner by lazy { TokenSigner(context) }
+
     /**
      * The [TrustStore] used to fetch and update trust scores from peers.
      */
@@ -56,6 +60,9 @@ class EuroTokenCommunity(
 
     private val _bluetoothBroadcasts = MutableLiveData<List<BroadcastMessage>>(emptyList())
     val bluetoothBroadcasts: LiveData<List<BroadcastMessage>> get() = _bluetoothBroadcasts
+
+    private val _securityAlerts = MutableLiveData<Event<String>>()
+    val securityAlerts: LiveData<Event<String>> = _securityAlerts
 
     init {
         messageHandlers[MessageId.ROLLBACK_REQUEST] = ::onRollbackRequestPacket
@@ -88,11 +95,24 @@ class EuroTokenCommunity(
             throw EuroTokenOfflineTransferValidator.InvalidTokenPayload("Failed to deserialize tokens")
         }
 
-        Log.d("EuroOfflineValidator", "Deserialized tokens, checking for double spending...")
-        // CHeck if the tokens are valid - signature
 
-        if (bfManager.isDoubleSpent(tokens))
+        val invalid = tokens.firstOrNull { !tokenSigner.verify(it) }
+        if (invalid != null) {
+            _securityAlerts.postValue(
+                Event("Forged token detected. Transaction rejected.")
+            )
+            Log.d("EuroOfflineValidator", "Invalid token signature for token: ${invalid.id}, amount: ${invalid.amount}, dateCreated: ${invalid.dateCreated}")
+            throw EuroTokenOfflineTransferValidator.ForgedTokenSignature(
+                "Invalid signature for token ${invalid.id}"
+            )
+        }
+        if (bfManager.isDoubleSpent(tokens)){
+            _securityAlerts.postValue(
+                Event("Double spending detected! Transaction rejected.")
+            )
+            Log.d("EuroOfflineValidator", "Double spending detected for tokens: $tokens")
             throw EuroTokenOfflineTransferValidator.OfflineDoubleSpendingDetected("Double spending detected for tokens: $tokens")
+        }
     }
 
     private fun onBluetoothBroadcastPacket(packet: Packet) {
@@ -149,9 +169,11 @@ class EuroTokenCommunity(
         }
     }
 
-    fun broadcastBloomFilter() {
+    fun broadcastBloomFilter(update_on_send: Boolean = false) {
         val bloomFilter = myTokenStore.getBloomFilter("shared")
-        bloomFilter?.put("Debug test")
+        if (update_on_send) {
+            // TODO
+        }
         val payload = BloomFilterTransmissionPayload(bloomFilter!!.toByteArray())
         val packet = serializePacket(
             MessageId.BLOOM_FILTER,

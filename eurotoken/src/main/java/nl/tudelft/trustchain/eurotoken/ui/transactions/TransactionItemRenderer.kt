@@ -12,6 +12,7 @@ import nl.tudelft.trustchain.common.eurotoken.Gateway
 import nl.tudelft.trustchain.common.eurotoken.GatewayStore
 import nl.tudelft.trustchain.common.eurotoken.Transaction
 import nl.tudelft.trustchain.common.eurotoken.TransactionRepository
+import nl.tudelft.trustchain.common.eurotoken.TransactionRepository.Companion.KEY_IS_REFUND
 import nl.tudelft.trustchain.common.eurotoken.getBalanceForBlock
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.databinding.ItemTransactionBinding
@@ -103,6 +104,17 @@ class TransactionItemRenderer(
         } else {
             binding.txtProp.text = "A"
             binding.txtProp.setTextColor(ContextCompat.getColor(getContext(), R.color.green))
+        }
+
+        if (item.transaction.type == TransactionRepository.BLOCK_TYPE_WITHDRAWAL &&
+            item.transaction.block.transaction[TransactionRepository.KEY_IS_REFUND] as Boolean) {
+            binding.txtType.text = "Refund"
+            binding.txtType.setTextColor(ContextCompat.getColor(getContext(), R.color.blue))
+        }
+        else if(item.transaction.type == TransactionRepository.BLOCK_TYPE_WITHDRAWAL &&
+            !(item.transaction.block.transaction[TransactionRepository.KEY_IS_REFUND] as Boolean)){
+            binding.txtType.text = "Withdrawal"
+            binding.txtType.setTextColor(ContextCompat.getColor(getContext(), R.color.red))
         }
 
         setOnLongClickListener {
