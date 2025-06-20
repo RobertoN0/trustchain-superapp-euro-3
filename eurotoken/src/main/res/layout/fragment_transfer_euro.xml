@@ -59,42 +59,73 @@
         android:id="@+id/balanceLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="1dp">
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/txtOwnPublicKey"
-            android:layout_width="match_parent"
+<!--        <TextView-->
+<!--            android:id="@+id/txtOwnPublicKey"-->
+<!--            android:layout_width="match_parent"-->
+
+<!--            android:layout_height="wrap_content"-->
+<!--            android:ellipsize="end"-->
+<!--            android:lines="1"-->
+<!--            android:typeface="monospace"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent"-->
+<!--            android:visibility="gone"-->
+<!--            tools:text="4nmZNbpULdgYtjC2CW4NMveU8N6d4WW6" />-->
+
+        <!-- Aggiungiamo un guideline per centrare -->
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/verticalCenterGuideline"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:lines="1"
-            android:typeface="monospace"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:visibility="gone"
-            tools:text="4nmZNbpULdgYtjC2CW4NMveU8N6d4WW6" />
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
 
+        <!-- Etichetta Euro -->
         <TextView
             android:id="@+id/txtOwnName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your balance"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtOwnPublicKey"
-            android:textStyle="bold" />
+            android:text="Euro balance"
+            android:textStyle="bold"
+            android:layout_marginEnd="20dp"
+            app:layout_constraintEnd_toStartOf="@id/verticalCenterGuideline"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Etichetta Token -->
+        <TextView
+            android:id="@+id/txtTokenBalanceName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Token balance"
+            android:textStyle="bold"
+            android:layout_marginStart="20dp"
+            app:layout_constraintStart_toEndOf="@id/verticalCenterGuideline"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Valore Euro -->
         <TextView
             android:id="@+id/txtBalance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="20.00"
-            android:textSize="60dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtOwnName"  />
+            android:textSize="40dp"
+            app:layout_constraintEnd_toEndOf="@id/txtOwnName"
+            app:layout_constraintStart_toStartOf="@id/txtOwnName"
+            app:layout_constraintTop_toBottomOf="@id/txtOwnName" />
+
+        <!-- Valore Token -->
+        <TextView
+            android:id="@+id/txtTokenBalance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00"
+            android:textSize="40dp"
+            app:layout_constraintEnd_toEndOf="@id/txtTokenBalanceName"
+            app:layout_constraintStart_toStartOf="@id/txtTokenBalanceName"
+            app:layout_constraintTop_toBottomOf="@id/txtTokenBalanceName" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
