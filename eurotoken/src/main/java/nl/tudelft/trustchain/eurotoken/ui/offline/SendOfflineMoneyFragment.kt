@@ -59,7 +59,8 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         binding.txtAmount.text = "Amount: ${TransactionRepository.prettyAmount(amount)}"
 
         binding.btnSend.setOnClickListener {
-            tokenSelectionViewModel.selectMPT(amount, seed)
+//            tokenSelectionViewModel.selectMPT(amount, seed)
+            tokenSelectionViewModel.selectRandomUnspent(amount)
         }
 
         binding.btnDoubleSpend.setOnClickListener {
@@ -78,7 +79,7 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
         lifecycleScope.launchWhenStarted {
             tokenSelectionViewModel.selectedTokens.collect { tokens ->
-                handleSendTransaction(publicKey, amount, seed, tokens)
+                handleSendTransaction(publicKey, amount, tokens)
             }
         }
     }
@@ -89,7 +90,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
     private fun handleSendTransaction(
         publicKey: String,
         amount: Long,
-        seed: String?,
         tokens: List<BillFaceToken>
     ) {
         if (tokens.isEmpty()) {
@@ -105,7 +105,6 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
         // Serialize tokens for transmission
         val serializedTokens = BillFaceToken.serializeTokenList(tokens)
-        val sizeInBytes = serializedTokens.toByteArray(Charsets.UTF_8).size
 
         val tokenBalance = tokenStore.getTotalBalance()
         val success =

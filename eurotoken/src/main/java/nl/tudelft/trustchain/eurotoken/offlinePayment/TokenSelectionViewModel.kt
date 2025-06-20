@@ -13,6 +13,7 @@ import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.ForgedTokenSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.MPTSelection
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.RandomSelector
+import kotlin.random.Random
 
 class TokenSelectionViewModel(
     private val tokenStore: ITokenStore
