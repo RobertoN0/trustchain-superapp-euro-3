@@ -7,6 +7,7 @@ import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionRe
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.Before
+import java.util.Date
 
 class DoubleSpendSelectorTest {
 
@@ -81,7 +82,8 @@ class DoubleSpendSelectorTest {
                     amount = tokenValue,
                     isSpent = true,
                     id = "",
-                    intermediarySignature = ByteArray(0)
+                    intermediarySignature = ByteArray(0),
+                    dateCreated = System.currentTimeMillis()
                 )
             )
         }
@@ -94,7 +96,8 @@ class DoubleSpendSelectorTest {
                     amount = tokenValue,
                     isSpent = false,
                     id = "",
-                    intermediarySignature = ByteArray(0)
+                    intermediarySignature = ByteArray(0),
+                    dateCreated = System.currentTimeMillis()
                 )
             )
         }

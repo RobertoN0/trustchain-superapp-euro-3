@@ -89,7 +89,8 @@ class RandomSelectorTest {
                     amount = tokenValue,
                     isSpent = true,
                     id = "",
-                    intermediarySignature = ByteArray(0)
+                    intermediarySignature = ByteArray(0),
+                    dateCreated = System.currentTimeMillis()
                 )
             )
         }
@@ -102,7 +103,8 @@ class RandomSelectorTest {
                     amount = tokenValue,
                     isSpent = false,
                     id = "",
-                    intermediarySignature = ByteArray(0)
+                    intermediarySignature = ByteArray(0),
+                    dateCreated = System.currentTimeMillis()
                 )
             )
         }
