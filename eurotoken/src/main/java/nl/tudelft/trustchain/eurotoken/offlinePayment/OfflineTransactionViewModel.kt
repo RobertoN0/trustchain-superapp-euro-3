@@ -15,9 +15,6 @@ import nl.tudelft.trustchain.eurotoken.offlinePayment.bluetooth.BluetoothSocketL
 import nl.tudelft.trustchain.eurotoken.offlinePayment.transaction.ReceiverTransactionManager
 import nl.tudelft.trustchain.eurotoken.offlinePayment.transaction.SenderTransactionManager
 import nl.tudelft.trustchain.eurotoken.offlinePayment.transaction.TransactionManager
-import nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment.Companion.ARG_AMOUNT
-import nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment.Companion.ARG_NAME
-import nl.tudelft.trustchain.eurotoken.ui.offline.ReceiverDetailsFragment.Companion.ARG_TYPE
 import org.json.JSONObject
 import java.io.IOException
 import java.util.UUID
