@@ -84,47 +84,59 @@
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp">
 
-        <LinearLayout
+
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="195dp"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="Transaction Details"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtRecipientName"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                tools:text="" />
+                android:layout_height="195dp"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <TextView
-                android:id="@+id/txtRecipientPublicKey"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                tools:text="Public Key: 4nmZNbpULdgYtjC2CW4NMveU8N6d4WW6" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Transaction Details"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/txtAmount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textStyle="bold"
-                tools:text="Amount: €5,00" />
+                <TextView
+                    android:id="@+id/txtRecipientName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    tools:text="" />
 
-            <TextView
-                android:id="@+id/txtSelectionMethod"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Method" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/txtRecipientPublicKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    tools:text="Public Key: 4nmZNbpULdgYtjC2CW4NMveU8N6d4WW6" />
+
+                <TextView
+                    android:id="@+id/txtSeed"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Seed" />
+
+                <TextView
+                    android:id="@+id/txtAmount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    tools:text="Amount: €5,00" />
+
+                <TextView
+                    android:id="@+id/txtSelectionMethod"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Method" />
+            </LinearLayout>
+        </ScrollView>
     </androidx.cardview.widget.CardView>
 
 <!--    <androidx.cardview.widget.CardView-->
@@ -202,5 +214,15 @@
             android:textColor="@color/white"
             android:backgroundTint="@color/cardview_dark_background"/>
     </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
 
 </LinearLayout>
