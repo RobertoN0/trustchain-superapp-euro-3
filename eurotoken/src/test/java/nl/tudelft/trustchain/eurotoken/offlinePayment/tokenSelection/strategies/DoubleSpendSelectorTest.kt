@@ -1,13 +1,12 @@
 package nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies
 
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.offlinePayment.ITokenStore
+import nl.tudelft.trustchain.eurotoken.db.ITokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.StubTokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionResult
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.Before
-import java.util.Date
 
 class DoubleSpendSelectorTest {
 

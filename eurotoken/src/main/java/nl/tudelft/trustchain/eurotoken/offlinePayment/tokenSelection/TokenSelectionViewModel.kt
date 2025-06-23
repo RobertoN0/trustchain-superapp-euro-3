@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.offlinePayment.ITokenStore
+import nl.tudelft.trustchain.eurotoken.db.ITokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.DoubleSpendSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.ForgedTokenSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.MPTSelection

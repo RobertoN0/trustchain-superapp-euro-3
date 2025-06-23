@@ -1,6 +1,5 @@
-package nl.tudelft.trustchain.eurotoken.offlinePayment
+package nl.tudelft.trustchain.eurotoken.db
 
-import nl.tudelft.trustchain.eurotoken.db.SimpleBloomFilter
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 
 interface ITokenStore {
