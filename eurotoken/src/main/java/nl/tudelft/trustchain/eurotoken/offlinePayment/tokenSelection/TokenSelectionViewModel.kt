@@ -1,4 +1,4 @@
-package nl.tudelft.trustchain.eurotoken.offlinePayment
+package nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -7,13 +7,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionResult
-import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionStrategy
+import nl.tudelft.trustchain.eurotoken.db.ITokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.DoubleSpendSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.ForgedTokenSelector
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.MPTSelection
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies.RandomSelector
-import kotlin.random.Random
 
 class TokenSelectionViewModel(
     private val tokenStore: ITokenStore

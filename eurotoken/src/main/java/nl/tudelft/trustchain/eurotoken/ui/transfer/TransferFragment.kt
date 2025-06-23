@@ -28,6 +28,8 @@ import nl.tudelft.trustchain.eurotoken.EuroTokenMainActivity
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.community.EuroTokenCommunity
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentTransferEuroBinding
+import nl.tudelft.trustchain.eurotoken.entity.mpt.MPTUtils
+import nl.tudelft.trustchain.eurotoken.entity.mpt.TokenMPTUtils.createMerchantSeed
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.offline.SendOfflineMoneyFragment
 import nl.tudelft.trustchain.eurotoken.ui.offline.SendOfflineMoneyFragment.Companion.ARG_SEED
@@ -155,7 +157,8 @@ class TransferFragment : EurotokenBaseFragment(R.layout.fragment_transfer_euro) 
                     connectionData.put("type", "transfer")
                 } else {
                     connectionData.put("type", "offline_transfer")
-                    connectionData.put("seed", "I am a seed for offline transfer")
+                    val seed = createMerchantSeed(myPeer.publicKey.keyToBin().toHex())
+                    connectionData.put("seed", seed)
                 }
                 val args = Bundle()
 

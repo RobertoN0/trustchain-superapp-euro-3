@@ -1,7 +1,6 @@
 package nl.tudelft.trustchain.eurotoken.ui.offline
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -72,7 +71,7 @@ class BloomFilterStatsFragment : EurotokenBaseFragment(R.layout.fragment_bloom_f
             return
         }
         val factory = BloomFilterViewModelFactory(bfManager)
-        bfViewModel = ViewModelProvider(this, factory).get(BloomFilerStatsViewModel::class.java)
+        bfViewModel = ViewModelProvider(this, factory)[BloomFilerStatsViewModel::class.java]
     }
 
     private fun initPeerViewModel() {
@@ -80,6 +79,6 @@ class BloomFilterStatsFragment : EurotokenBaseFragment(R.layout.fragment_bloom_f
             ?: throw IllegalStateException("EuroTokenCommunity not configured"),
             ContactStore.getInstance(requireContext())
         )
-        peerViewModel = ViewModelProvider(this, factory).get(BLEConnectedPeersViewModel::class.java)
+        peerViewModel = ViewModelProvider(this, factory)[BLEConnectedPeersViewModel::class.java]
     }
 }

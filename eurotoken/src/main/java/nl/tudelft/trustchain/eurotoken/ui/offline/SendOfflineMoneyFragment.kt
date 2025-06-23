@@ -15,10 +15,9 @@ import nl.tudelft.trustchain.common.util.viewBinding
 import nl.tudelft.trustchain.eurotoken.R
 import nl.tudelft.trustchain.eurotoken.databinding.FragmentSendOfflineMoneyBinding
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.entity.mpt.MPTSelectionProof
 import nl.tudelft.trustchain.eurotoken.entity.mpt.TokenMPTUtils
-import nl.tudelft.trustchain.eurotoken.offlinePayment.TokenSelectionViewModel
-import nl.tudelft.trustchain.eurotoken.offlinePayment.TokenSelectionViewModelFactory
+import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.TokenSelectionViewModel
+import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.TokenSelectionViewModelFactory
 import nl.tudelft.trustchain.eurotoken.ui.EurotokenBaseFragment
 import nl.tudelft.trustchain.eurotoken.ui.transfer.SendMoneyFragment
 
@@ -56,10 +55,11 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
         binding.txtRecipientName.text = "Recipient: $name"
         binding.txtRecipientPublicKey.text = "Public Key: $publicKey"
+        binding.txtSeed.text = "Seed used: $seed"
         binding.txtAmount.text = "Amount: ${TransactionRepository.prettyAmount(amount)}"
 
         binding.btnSend.setOnClickListener {
-            tokenSelectionViewModel.selectRandomUnspent(amount)
+            tokenSelectionViewModel.selectMPT(amount, seed)
         }
 
         binding.btnDoubleSpend.setOnClickListener {
@@ -145,7 +145,7 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
 
     private fun initTokenSelectionViewModel() {
         val factory = TokenSelectionViewModelFactory(tokenStore)
-        tokenSelectionViewModel = ViewModelProvider(this, factory).get(TokenSelectionViewModel::class.java)
+        tokenSelectionViewModel = ViewModelProvider(this, factory)[TokenSelectionViewModel::class.java]
     }
 
     companion object {

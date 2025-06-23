@@ -1,5 +1,6 @@
 package nl.tudelft.trustchain.eurotoken.entity.mpt
 
+import android.util.Log
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import java.security.MessageDigest
 
@@ -62,13 +63,16 @@ class MPTTokenSelector {
 
         val prp = TokenPseudoRandomPermutation(seed)
         val allKeys = mpt.getAllKeys()
+        Log.d("MPT", "All keys: ${allKeys.joinToString(", ")}")
 
         if (allKeys.isEmpty()) {
+            Log.d("MPT", "MPT has no keys")
             return emptyList()
         }
 
         // Get deterministic order of keys using PRP-based algorithm
-        val orderedKeys = chooseKeysRecursive(mpt, allKeys, prp)
+        val orderedKeys = chooseKeysRecursive(mpt, allKeys, prp).distinct()
+        Log.d("MPT", "Ordered keys found: ${orderedKeys.joinToString(", ")}")
         val selectedTokens = mutableListOf<BillFaceToken>()
         var currentSum = 0L
 
@@ -120,6 +124,7 @@ class MPTTokenSelector {
         for (nibble in 0..15) {
             val k = prp.apply(nibble)
             val keysWithNibble = keysByNibble[k]
+            Log.d("MPT", "Keys with nibble: ${keysWithNibble?.joinToString(", ")}")
 
             if (!keysWithNibble.isNullOrEmpty()) {
                 if (keysWithNibble.size == 1) {
@@ -127,13 +132,17 @@ class MPTTokenSelector {
                 } else {
                     // Recursively process keys with same prefix
                     val subKeys = keysWithNibble.map { it.substring(1) }
+                    Log.d("MPT", "subKeys=`${subKeys}`")
                     val subOrdered = chooseKeysRecursive(mpt, subKeys, prp)
+                    Log.d("MPT", "subOrdered=`${subOrdered}`")
                     val fullKeys = subOrdered.map { k.toString(16) + it }
+                    Log.d("MPT", "fullKeys=`${fullKeys}`")
                     orderedKeys.addAll(fullKeys)
                 }
             }
         }
 
+        Log.d("MPT", "chooseKeysRecursive: ${orderedKeys.joinToString(", ")}")
         return orderedKeys
     }
 

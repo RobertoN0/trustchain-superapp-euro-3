@@ -4,7 +4,6 @@ import android.content.Context
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import nl.tudelft.eurotoken.sqldelight.Database
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.offlinePayment.ITokenStore
 
 /**
  * TokenStore manages the BillFaceToken objects.
