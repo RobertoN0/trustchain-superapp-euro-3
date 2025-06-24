@@ -319,9 +319,6 @@ class TransactionRepository(
         serializedTokens: String
     ): Boolean {
         Log.d("sendTransferProposal", "sending amount: $amount")
-        if (tokenBalance - amount < 0) {
-            return false
-        }
         scope.launch {
             sendOfflineProposalSync(recipient, tokenBalance, amount, serializedTokens)
         }

@@ -63,7 +63,10 @@ class MPTTokenSelector {
 
         val prp = TokenPseudoRandomPermutation(seed)
         val allKeys = mpt.getAllKeys()
+        Log.d("MPT", "All keys: ${allKeys.joinToString(", ")}")
+
         if (allKeys.isEmpty()) {
+            Log.d("MPT", "MPT has no keys")
             return emptyList()
         }
 

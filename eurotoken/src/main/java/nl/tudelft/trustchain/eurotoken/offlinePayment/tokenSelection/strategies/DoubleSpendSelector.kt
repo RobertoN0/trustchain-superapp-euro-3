@@ -1,7 +1,7 @@
 package nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies
 
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.offlinePayment.ITokenStore
+import nl.tudelft.trustchain.eurotoken.db.ITokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionResult
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionStrategy
 import kotlin.math.ceil

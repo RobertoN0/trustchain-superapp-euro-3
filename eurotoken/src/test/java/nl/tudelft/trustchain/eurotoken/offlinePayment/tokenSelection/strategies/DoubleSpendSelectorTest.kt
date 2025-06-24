@@ -1,7 +1,7 @@
 package nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.strategies
 
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
-import nl.tudelft.trustchain.eurotoken.offlinePayment.ITokenStore
+import nl.tudelft.trustchain.eurotoken.db.ITokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.StubTokenStore
 import nl.tudelft.trustchain.eurotoken.offlinePayment.tokenSelection.SelectionResult
 import org.junit.Assert.*
@@ -81,7 +81,8 @@ class DoubleSpendSelectorTest {
                     amount = tokenValue,
                     isSpent = true,
                     id = "",
-                    intermediarySignature = ByteArray(0)
+                    intermediarySignature = ByteArray(0),
+                    dateCreated = System.currentTimeMillis()
                 )
             )
         }
@@ -94,7 +95,8 @@ class DoubleSpendSelectorTest {
                     amount = tokenValue,
                     isSpent = false,
                     id = "",
-                    intermediarySignature = ByteArray(0)
+                    intermediarySignature = ByteArray(0),
+                    dateCreated = System.currentTimeMillis()
                 )
             )
         }
