@@ -19,7 +19,7 @@ With this project, inspired by the work described in [_Ad Hoc Prevention of Doub
 ### Intermediary
 The below screenshot shows the intermediary fragment. The objective of this fragment is to allow the user to comunicate with the **intermediary**. The latter should be a trusted third party that can exchange the **Online Account based** money with **Offline Token based** money. In our implementation this intermediary is represented by the **gateway** as we do not have access to a realistic third party. More in detail our conversion process is done by creating **proposal** blocks of **type withdrawal** with the gateway (similar to how the checkpoint blocks are created). These proposal block we create contain the total amount of money we are converting, together with the actual tokens that we are receiving/redeeming. For our simplified implementation there is never going to be an **agreement** withdrawal block as this would need the realistic intermediary. Functionality wise as the picture below suggests, we either input the value of money we want to transfer to tokens and press *SEND MONEY TO GATEWAY*, or we have unspent tokens that we don't need/want anymore so we press *REDEEM UNSPENT TOKENS*.
 
-![Image](images\Intermediary_screenshot.jpg)
+![Image](images\Intermediary_screenshot.png)
 
 ### Token Representation
 The intermediary is responsible for creating **tokens** and to do so it needs to include the following information:
