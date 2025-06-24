@@ -1,6 +1,7 @@
 package nl.tudelft.trustchain.eurotoken.entity.mpt
 
 
+import android.util.Log
 import nl.tudelft.trustchain.eurotoken.entity.BillFaceToken
 import nl.tudelft.trustchain.eurotoken.entity.mpt.*
 
@@ -70,6 +71,7 @@ class MPTTokenSelectionHelper {
             // Use Algorithm 1 for deterministic selection
             val selectedTokens = mptSelector.chooseTokensFromMPT(merchantSeed, mpt, amount)
 
+            Log.d("MPT-LIST", "selected tokens: $selectedTokens")
             // Verify selection integrity
             if (selectedTokens.isEmpty()) {
                 return emptyList()

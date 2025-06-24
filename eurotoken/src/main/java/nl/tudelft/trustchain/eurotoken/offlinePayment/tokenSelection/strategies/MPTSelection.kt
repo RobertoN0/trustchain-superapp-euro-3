@@ -28,6 +28,11 @@ class MPTSelection(
             amount,
             merchantSeed
         )
+
+        if (selected.sumOf { it.amount } < amount) {
+            return SelectionResult.Failure("Insufficient selected tokens")
+        }
+
         return SelectionResult.Success(selected)
     }
 }
