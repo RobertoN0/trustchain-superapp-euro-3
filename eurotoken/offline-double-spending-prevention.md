@@ -12,3 +12,21 @@ With this project, inspired by the work described in [_Ad Hoc Prevention of Doub
 
 - Instead of allowing the sender to freely choose which tokens to spend (which would enable strategic hiding), token selection is performed by traversing the payer’s **Merkle Patricia Trie (MPT)** in a fixed order determined by a **permutation of the trie’s nibbles**, seeded by the receiver. This deterministic process ensures the selection is non-manipulable and **verifiable** via Merkle proofs.
     
+
+
+## Withdrawal and token representation
+
+### Intermediary
+The below screenshot shows the intermediary fragment. The objective of this fragment is to allow the user to comunicate with the **intermediary**. The latter should be a trusted third party that can exchange the **Online Account based** money with **Offline Token based** money. In our implementation this intermediary is represented by the **gateway** as we do not have access to a realistic third party. More in detail our conversion process is done by creating **proposal** blocks of **type withdrawal** with the gateway (similar to how the checkpoint blocks are created). These proposal block we create contain the total amount of money we are converting, together with the actual tokens that we are receiving/redeeming. For our simplified implementation there is never going to be an **agreement** withdrawal block as this would need the realistic intermediary. Functionality wise as the picture below suggests, we either input the value of money we want to transfer to tokens and press *SEND MONEY TO GATEWAY*, or we have unspent tokens that we don't need/want anymore so we press *REDEEM UNSPENT TOKENS*.
+
+![Image](images\Intermediary_screenshot.jpg)
+
+### Token Representation
+The intermediary is responsible for creating **tokens** and to do so it needs to include the following information:
+- **unique ID** - composed using peer's Id and a nonce (timestamp of creation)
+- **value** of token in cents (5 cents in our case)
+- **signature** of the intermediary
+- creation date
+
+These values are then used to check the validity of tokens during a transaction. More in detail, the token's id are included in a bloom filter so that when a transaction is happening, the receiver can check if the received tokens have not been already spent. Another important check is the signature; this allows the user to check that the tokens received actually come from the intermediary, and so they have not been forged. Finally the value of the token simply shows what value they represent and so what is the total of a transaction by summing their values.
+
