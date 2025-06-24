@@ -11,4 +11,25 @@ With this project, inspired by the work described in [_Ad Hoc Prevention of Doub
 - To detect double-spending in the absence of a global ledger, a **Bloom filter** is broadcast at the end of each transaction to nearby peers. This compact filter encodes the set of previously spent tokens and is later used to validate incoming payments.
 
 - Instead of allowing the sender to freely choose which tokens to spend (which would enable strategic hiding), token selection is performed by traversing the payer’s **Merkle Patricia Trie (MPT)** in a fixed order determined by a **permutation of the trie’s nibbles**, seeded by the receiver. This deterministic process ensures the selection is non-manipulable and **verifiable** via Merkle proofs.
-    
+
+## Offline Transaction
+The transaction begins when the **receiver**, operating offline, creates a QR code. This offline QR code  contains the same information as its online version(public key, requested amount, name), but also includes a **seed**. This seed will be used by the sender to run the algorithm used to select which tokens to include in the transaction
+
+Once the **sender** scans this QR code, the app presents a summary screen showing the transaction details. Here, the sender can choose between different behaviors:
+-  normal, legitimate payment;
+- a double-spending attempt (reusing previously spent tokens);
+- or using **forged tokens** (not issued by the intermediary). These last two are included for demo purposes.
+
+In all cases, the sender constructs a **Proposal Block** of type `OFFLINE_TRANSFER`.
+The Proposal Block is then sent to the receiver, who proceeds to validate the transaction:
+- Tokens are deserialized and their signatures are verified.
+- The total value is checked to ensure it satisfies the requested amount.
+- The receiver ensures that none of the tokens have been received before, this is done by consulting both the **local token database** and the current **Bloom filter**, which is populated with identifiers of previously received tokens and continuously updated through proximity broadcasts.
+
+If all checks pass, the receiver responds with an **Agreement Block**, finalizing the transaction. At this point, the receiver updates their balance and:
+- Adds the newly received tokens to their **local Bloom filter**
+- Broadcasts the updated Bloom filter to nearby peers, helping prevent future double-spending.
+
+![Offline Transaction Sequence Diagram](images/o)
+## Tests
+TO DO (say what tests we have done)

@@ -54,12 +54,11 @@ class SendOfflineMoneyFragment : EurotokenBaseFragment(R.layout.fragment_send_of
         }
 
         binding.txtRecipientName.text = "Recipient: $name"
-        binding.txtRecipientPublicKey.text = "Public Key: $publicKey"
         binding.txtSeed.text = "Seed used: $seed"
         binding.txtAmount.text = "Amount: ${TransactionRepository.prettyAmount(amount)}"
 
         binding.btnSend.setOnClickListener {
-            tokenSelectionViewModel.selectMPT(amount, seed)
+            tokenSelectionViewModel.selectRandomUnspent(amount)
         }
 
         binding.btnDoubleSpend.setOnClickListener {
