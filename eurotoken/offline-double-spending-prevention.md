@@ -61,6 +61,8 @@ Complementing the BF use is the Merkle Patricia Trie (MPT), which ensures a fair
 
  * **Unbiased and Verifiable Outcome**: Selection process is both transparent and secure since the sender cannot influence the path to select specific tokens. This removes the attack vector of strategic selection and ensures the transaction is fair and its inputs are independently verifiable.
 
+> Note: our current integration of the MPT in the codebase is simplified. It does not yet dynamically adapt the trie's structure after each withdrawal or spend, as envisioned in the original paper. A full integration to leverage the MPT's complete potential is possible but would require further code modifications.
+
 
 ## Offline Transaction
 The transaction begins when the **receiver**, operating offline, creates a QR code. This offline QR code  contains the same information as its online version(public key, requested amount, name), but also includes a **seed**. This seed will be used by the sender to run the algorithm used to select which tokens to include in the transaction
