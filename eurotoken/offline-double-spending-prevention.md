@@ -83,7 +83,8 @@ The Proposal Block is then sent to the receiver, who proceeds to validate the tr
 - The total value is checked to ensure it satisfies the requested amount.
 - The receiver checks that none of the tokens have already been received, either in previous transactions (via the local token database) or by others (via the Bloom filter).
 
-Since a proposal block potentially contains a large number of tokens, its size can be large as well. Larger than one MTU, which makes the default IPv8 bluetooth implementation drop the packet. We have improved the IPv8 Bluetooth Low Energy implementation by splitting a large packet into smaller ones before sending and merging them into the original packet on the receiver side. This allowed us to send approximately 50 kB in a matter of seconds.
+### Kotlin-IPv8 modifications
+Since a proposal block potentially contains a large number of tokens, its size can be large as well. Larger than one MTU, which makes the default IPv8 bluetooth implementation drop the packet. We have improved the IPv8 Bluetooth Low Energy implementation by splitting a large packet into smaller ones before sending and merging them into the original packet on the receiver side. This allowed us to send approximately 50 kB in a matter of seconds. The forked kotlin-ipv8 repository with our modifications can be found [here](https://github.com/GijsMargadant/kotlin-ipv8).
 
 
 If validation succeeds, the receiver sends back an **Agreement Block**, finalizing the transaction. The sender’s token balance is updated, and the receiver’s online balance increases. The received tokens are also added to the Bloom filter and broadcast to surrounding peers.
