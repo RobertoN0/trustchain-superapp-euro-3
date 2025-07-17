@@ -71,8 +71,8 @@ class MPTTokenSelector {
         }
 
         // Get deterministic order of keys using PRP-based algorithm
-        val orderedKeys = chooseKeysRecursive(mpt, allKeys, prp).distinct()
-        Log.d("MPT", "Ordered keys found: ${orderedKeys.joinToString(", ")}")
+        val orderedKeys = chooseKeysSimple(allKeys, prp).distinct()
+        Log.d("MPT-LIST", "Ordered keys: $orderedKeys")
         val selectedTokens = mutableListOf<BillFaceToken>()
         var currentSum = 0L
 
@@ -95,7 +95,28 @@ class MPTTokenSelector {
         return selectedTokens
     }
 
+
+    private fun chooseKeysSimple(
+        keys: List<String>,
+        prp: TokenPseudoRandomPermutation
+    ): List<String> {
+
+        if (keys.isEmpty()) return emptyList()
+        if (keys.size == 1) return keys
+
+        return keys.sortedBy { key ->
+            if (key.isEmpty()) {
+                16 // Empty keys go at the end
+            } else {
+                val firstNibble = hexCharToInt(key[0])
+                prp.apply(firstNibble)
+            }
+        }
+    }
+
+
     /**
+     * TODO: Sometimes this method return empty list (FIX needed)
      * Recursive implementation of Algorithm 1 adapted for existing MPT structure
      * Simulates the algorithm by organizing keys by their hex prefixes and applying PRP
      */
@@ -124,7 +145,6 @@ class MPTTokenSelector {
         for (nibble in 0..15) {
             val k = prp.apply(nibble)
             val keysWithNibble = keysByNibble[k]
-            Log.d("MPT", "Keys with nibble: ${keysWithNibble?.joinToString(", ")}")
 
             if (!keysWithNibble.isNullOrEmpty()) {
                 if (keysWithNibble.size == 1) {
@@ -132,17 +152,14 @@ class MPTTokenSelector {
                 } else {
                     // Recursively process keys with same prefix
                     val subKeys = keysWithNibble.map { it.substring(1) }
-                    Log.d("MPT", "subKeys=`${subKeys}`")
                     val subOrdered = chooseKeysRecursive(mpt, subKeys, prp)
-                    Log.d("MPT", "subOrdered=`${subOrdered}`")
-                    val fullKeys = subOrdered.map { k.toString(16) + it }
-                    Log.d("MPT", "fullKeys=`${fullKeys}`")
+                    val prefix = k.toString(16)
+                    val fullKeys = subOrdered.map { prefix + it }
                     orderedKeys.addAll(fullKeys)
                 }
             }
         }
 
-        Log.d("MPT", "chooseKeysRecursive: ${orderedKeys.joinToString(", ")}")
         return orderedKeys
     }
 
@@ -159,30 +176,6 @@ class MPTTokenSelector {
         }
     }
 
-    /**
-     * Verify that token selection was done correctly using the same seed
-     */
-    fun verifyTokenSelection(
-        seed: String,
-        originalTokens: List<BillFaceToken>,
-        selectedTokens: List<BillFaceToken>,
-        targetAmount: Long
-    ): Boolean {
-
-        return try {
-            val mpt = buildTokenMPT(originalTokens)
-            val reselectedTokens = chooseTokensFromMPT(seed, mpt, targetAmount)
-
-            // Verify that the same tokens were selected
-            val originalIds = selectedTokens.map { it.id }.toSet()
-            val reselectedIds = reselectedTokens.map { it.id }.toSet()
-
-            originalIds == reselectedIds
-
-        } catch (e: Exception) {
-            false
-        }
-    }
 
     /**
      * Get root hash of the MPT for verification
