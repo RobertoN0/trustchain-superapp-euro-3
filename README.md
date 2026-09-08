@@ -1,3 +1,36 @@
+<h1 align="center">EuroToken — Offline Double-Spending Prevention</h1>
+
+<p align="center">
+  <strong>Spending a digital token twice is easy when nobody is online to notice.</strong>
+</p>
+
+<p align="center">
+  This fork of the TU Delft TrustChain Super App adds a mechanism that prevents double-spending
+  while devices are offline. Peers broadcast Bloom filters of spent tokens over Bluetooth Low
+  Energy, so a device can reject a token it has never seen a ledger entry for, without a network
+  round trip. Built for Blockchain Engineering (CS4160), TU Delft.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Problem-offline%20double--spending-1F5673?style=flat-square" alt="Offline double-spending">
+  <img src="https://img.shields.io/badge/Approach-Bloom%20filter%20gossip%20over%20BLE-1F5673?style=flat-square" alt="Bloom filter gossip over BLE">
+  <img src="https://img.shields.io/badge/License-GPL--3.0-2C6248?style=flat-square" alt="GPL-3.0 License">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Kotlin-3D4453?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Android-3D4453?style=flat-square&logo=android&logoColor=white" alt="Android">
+  <img src="https://img.shields.io/badge/TrustChain-3D4453?style=flat-square" alt="TrustChain">
+  <img src="https://img.shields.io/badge/SQLDelight-3D4453?style=flat-square&logo=sqlite&logoColor=white" alt="SQLDelight">
+  <img src="https://img.shields.io/badge/Bluetooth%20LE-3D4453?style=flat-square&logo=bluetooth&logoColor=white" alt="Bluetooth LE">
+</p>
+
+<p align="center">
+  <sub>Upstream documentation for the wider Super App follows below.</sub>
+</p>
+
+---
+
 # TrustChain Super App 
 [![Build Status](https://github.com/Tribler/trustchain-superapp/workflows/build/badge.svg)](https://github.com/Tribler/trustchain-superapp/actions) [![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
 
