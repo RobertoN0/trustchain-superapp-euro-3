@@ -22,8 +22,8 @@ class TokenSelectionViewModel(
     private val _selectedTokens = MutableSharedFlow<List<BillFaceToken>>()
     val selectedTokens = _selectedTokens.asSharedFlow()
 
-    fun selectRandomUnspent(amount: Long) {
-        val selector = RandomSelector(tokenStore, 123456789)
+    fun selectRandomUnspent(amount: Long, seed: String) {
+        val selector = MPTSelection(tokenStore, seed)
         selectTokens(selector, amount)
     }
 
